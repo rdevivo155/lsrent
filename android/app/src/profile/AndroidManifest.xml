@@ -3,5 +3,11 @@
     <!-- Flutter needs it to communicate with the running application
          to allow setting breakpoints, to provide hot reload, etc.
     -->
+    <application
+        android:requestLegacyExternalStorage="true"
+        android:name="io.flutter.app.FlutterApplication"
+        android:label="xxxxxx"
+        android:icon="@mipmap/launcher_icon">
+    </application>
     <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>

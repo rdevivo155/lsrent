@@ -23,11 +23,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: ^0.8.4+11
 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
+  video_player: ^2.3.0
+  file_picker: ^4.5.1
+  dio: ^4.0.6
+  shared_preferences: ^2.0.15
+  geolocator: ^8.2.1
 
 dev_dependencies:
   flutter_test:
@@ -51,4 +57,5 @@ flutter:
     - assets/crashedCar.png
     - assets/dayOff.png
     - assets/wallet.png
+    - assets/logo.png
 
