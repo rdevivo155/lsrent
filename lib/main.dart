@@ -4,12 +4,17 @@ import 'package:ls_rent/home/home.dart';
 import 'package:ls_rent/dayOff/dayOff.dart';
 import 'package:flutter/material.dart';
 import 'package:ls_rent/profile/profile.dart';
+import 'package:ls_rent/registration/registration.dart';
+import 'package:ls_rent/services/shared.dart';
 
 import 'home/home.dart';
 
 void main() async {
   // Set default home.
-  Widget _defaultHome = new Login();
+  WidgetsFlutterBinding.ensureInitialized();
+
+  bool isLogged = await getIsLogged();
+  Widget _defaultHome = !isLogged ? new Login() : new Home();
 
   // Get result of the login function.
   bool _result = false;
@@ -28,7 +33,8 @@ void main() async {
       '/accident': (BuildContext context) => new Accident(),
       // '/day-off': (BuildContext context) => new DayOff(),
       '/login': (BuildContext context) => new Login(),
-      '/profile': (BuildContext context) => new Profile()
+      '/profile': (BuildContext context) => new Profile(),
+      '/registration': (BuildContext context) => new Registration()
     },
   ));
 }

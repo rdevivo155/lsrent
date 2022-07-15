@@ -8,8 +8,12 @@ import 'package:ls_rent/model/response/login_response.dart';
 import 'package:ls_rent/services/shared.dart';
 import 'package:ls_rent/services/network.dart' as network;
 
+import '../model/request/registration_request.dart';
+import '../model/response/registration_response.dart';
+
 final emailFormKey = GlobalKey<FormState>(debugLabel: "username");
 final passwordFormKey = GlobalKey<FormState>(debugLabel: "password");
+final fiscalCodeFormKey = GlobalKey<FormState>(debugLabel: "fiscalCode");
 
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
@@ -18,17 +22,22 @@ class MyStatefulWidget extends StatefulWidget {
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
 }
 
-class Login extends StatelessWidget {
+class Registration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: MyStatefulWidget(), backgroundColor: Color(0xff569CDD));
+        appBar: AppBar(
+          title: const Text('Registrati'),
+        ),
+        body: MyStatefulWidget(),
+        backgroundColor: Color(0xff569CDD));
   }
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  TextEditingController fiscalCodeController = TextEditingController();
 
   TextStyle? labelStyle;
   bool loading = false;
@@ -39,6 +48,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     super.initState();
     nameController.text = "";
     passwordController.text = "";
+    fiscalCodeController.text = "";
   }
 
   @override
@@ -57,7 +67,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
                     child: Image.asset('assets/logo.png'))),
             Container(
-              padding: const EdgeInsets.fromLTRB(20, 150, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, 100, 20, 20),
               child: Form(
                 key: emailFormKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -148,10 +158,55 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               ),
             ),
             Container(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              child: Form(
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                key: fiscalCodeFormKey,
+                child: TextFormField(
+                  obscureText: false,
+                  cursorColor: Colors.white,
+                  controller: fiscalCodeController,
+                  style: TextStyle(color: Colors.white),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      Future.delayed(Duration.zero, () async {
+                        setState(() {
+                          error = true;
+                        });
+                      });
+
+                      return passwordError;
+                    }
+                    return null;
+                  },
+                  autofocus: false,
+                  autocorrect: false,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide:
+                          const BorderSide(color: Colors.white, width: 1.0),
+                    ),
+                    focusColor: Colors.white,
+                    prefixIcon: Icon(Icons.account_box, color: Colors.white),
+                    enabledBorder: const UnderlineInputBorder(
+                      borderSide:
+                          const BorderSide(color: Colors.white, width: 1.0),
+                    ),
+                    labelText: 'Codice fiscale',
+                    labelStyle: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 18,
+                        color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+            Container(
                 height: 80,
                 padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
                 child: ElevatedButton(
-                  child: const Text('ACCEDI',
+                  child: const Text('INVIA',
                       style: TextStyle(
                           fontFamily: 'Montserrat',
                           fontSize: 18,
@@ -164,8 +219,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           print(passwordController.text);
                           // network.
                           if (validateFields()) {
-                            loginAuth(context, nameController.text,
-                                passwordController.text);
+                            registration(
+                                context,
+                                nameController.text,
+                                passwordController.text,
+                                fiscalCodeController.text);
                           }
 
                           // loginAuth(
@@ -178,22 +236,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           // });
                         },
                 )),
-            Container(
-                height: 60,
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                child: ElevatedButton(
-                  child: const Text('REGISTRATI',
-                      style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800)),
-                  style: ElevatedButton.styleFrom(
-                      primary: Color(0xff569CDD),
-                      side: BorderSide(width: 1.0, color: Colors.white)),
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/registration');
-                  },
-                )),
+
             // Container(
             //     height: 80,
             //     padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -229,32 +272,36 @@ Future<bool> hasNetwork() async {
   }
 }
 
-Future<LoginResponse?> loginAuth(
-    BuildContext context, String username, String password) async {
+Future<RegistrationResponse?> registration(BuildContext context,
+    String username, String password, String taxCode) async {
   bool isOnline = await hasNetwork();
+  RegistrationRequest request =
+      RegistrationRequest(username, password, taxCode, 1);
   if (isOnline) {
     final response = await http.post(
-        Uri.parse("https://api.lsrent.ml/api/v1/login"),
+        Uri.parse("https://api.lsrent.ml/api/v1/register"),
         headers: <String, String>{
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: {
-          'username': username,
-          'password': password
+          "username": "prova@prova.it",
+          "password": "Eg7fBAPsn2LET9",
+          "tax_code": "CSRNGL75C22F839W",
+          "terms": "1"
         });
+    print(request.toJson());
 
     print(response.body);
 
-    if (response.statusCode == 200) {
-      LoginResponse loginResponse =
-          LoginResponse.fromJson(jsonDecode(response.body));
+    if (response.statusCode == 201) {
+      RegistrationResponse registrationResponse =
+          RegistrationResponse.fromJson(jsonDecode(response.body));
 
-      print(loginResponse.toJson());
-      setBasicAuth(loginResponse.data?.accessToken ?? "");
-      setIsLogged(true);
-      Navigator.of(context).popAndPushNamed('/home');
+      print(registrationResponse.toJson());
 
-      return loginResponse;
+      Navigator.of(context).popAndPushNamed('/login');
+
+      return registrationResponse;
     } else {
       // checkError(response.statusCode);
       return null;

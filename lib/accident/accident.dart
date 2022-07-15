@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
+import 'package:ls_rent/components/time_picker.dart';
+import 'package:ls_rent/components/date_picker.dart';
 
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
@@ -13,7 +15,6 @@ class MyStatefulWidget extends StatefulWidget {
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
 }
 
-
 class Accident extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -21,13 +22,78 @@ class Accident extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Sinistro'),
         ),
-        body: MyStatefulWidget(),backgroundColor: Colors.white)
-    ;
+        body: //MyStatefulWidget()
+            SizedBox(
+          width: MediaQuery.of(context).size.width,
+          child: Row(
+            children: [
+              Column(children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: 100,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      DatePicker(
+                          color: Colors.blue,
+                          isStartDate: true,
+                          activeStartDate: true,
+                          correctDate: "",
+                          isDisabled: false,
+                          notifyParent: () => ({}),
+                          days: 1),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    child: Row(
+                      children: [
+                        Radio<int>(
+                          activeColor: Colors.blue,
+                          value: 0,
+                          groupValue: 1,
+                          onChanged: (value) {
+                            // setState(() {
+                            //   radioSelected = value;
+                            //   globals.toward = "IN";
+                            // });
+                          },
+                        ),
+                        Text('Incidente',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black))
+                      ],
+                    )),
+                SizedBox(
+                    child: Row(
+                  children: [
+                    Radio<int>(
+                      activeColor: Colors.blue,
+                      value: 1,
+                      groupValue: 0,
+                      onChanged: (value) {
+                        // setState(() {
+                        //   radioSelected = value;
+                        //   globals.toward = "US";
+                        // });
+                      },
+                    ),
+                    Text('Guasto',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black))
+                  ],
+                ))
+              ])
+            ],
+          ),
+        ),
+        backgroundColor: Colors.white);
   }
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-
   List<XFile>? _imageFileList;
 
   set _imageFile(XFile? value) {
@@ -81,41 +147,41 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       await _playVideo(file);
     } else if (isMultiImage) {
       await _displayPickImageDialog(context!,
-              (double? maxWidth, double? maxHeight, int? quality) async {
-            try {
-              final List<XFile>? pickedFileList = await _picker.pickMultiImage(
-                maxWidth: maxWidth,
-                maxHeight: maxHeight,
-                imageQuality: quality,
-              );
-              setState(() {
-                _imageFileList = pickedFileList;
-              });
-            } catch (e) {
-              setState(() {
-                _pickImageError = e;
-              });
-            }
+          (double? maxWidth, double? maxHeight, int? quality) async {
+        try {
+          final List<XFile>? pickedFileList = await _picker.pickMultiImage(
+            maxWidth: maxWidth,
+            maxHeight: maxHeight,
+            imageQuality: quality,
+          );
+          setState(() {
+            _imageFileList = pickedFileList;
           });
+        } catch (e) {
+          setState(() {
+            _pickImageError = e;
+          });
+        }
+      });
     } else {
       await _displayPickImageDialog(context!,
-              (double? maxWidth, double? maxHeight, int? quality) async {
-            try {
-              final XFile? pickedFile = await _picker.pickImage(
-                source: source,
-                maxWidth: maxWidth,
-                maxHeight: maxHeight,
-                imageQuality: quality,
-              );
-              setState(() {
-                _imageFile = pickedFile;
-              });
-            } catch (e) {
-              setState(() {
-                _pickImageError = e;
-              });
-            }
+          (double? maxWidth, double? maxHeight, int? quality) async {
+        try {
+          final XFile? pickedFile = await _picker.pickImage(
+            source: source,
+            maxWidth: maxWidth,
+            maxHeight: maxHeight,
+            imageQuality: quality,
+          );
+          setState(() {
+            _imageFile = pickedFile;
           });
+        } catch (e) {
+          setState(() {
+            _pickImageError = e;
+          });
+        }
+      });
     }
   }
 
@@ -232,32 +298,32 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       body: Center(
         child: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
             ? FutureBuilder<void>(
-          future: retrieveLostData(),
-          builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.none:
-              case ConnectionState.waiting:
-                return const Text(
-                  'You have not yet picked an image.',
-                  textAlign: TextAlign.center,
-                );
-              case ConnectionState.done:
-                return _handlePreview();
-              default:
-                if (snapshot.hasError) {
-                  return Text(
-                    'Pick image/video error: ${snapshot.error}}',
-                    textAlign: TextAlign.center,
-                  );
-                } else {
-                  return const Text(
-                    'You have not yet picked an image.',
-                    textAlign: TextAlign.center,
-                  );
-                }
-            }
-          },
-        )
+                future: retrieveLostData(),
+                builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.none:
+                    case ConnectionState.waiting:
+                      return const Text(
+                        'You have not yet picked an image.',
+                        textAlign: TextAlign.center,
+                      );
+                    case ConnectionState.done:
+                      return _handlePreview();
+                    default:
+                      if (snapshot.hasError) {
+                        return Text(
+                          'Pick image/video error: ${snapshot.error}}',
+                          textAlign: TextAlign.center,
+                        );
+                      } else {
+                        return const Text(
+                          'You have not yet picked an image.',
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                  }
+                },
+              )
             : _handlePreview(),
       ),
       floatingActionButton: Column(
@@ -355,14 +421,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 TextField(
                   controller: maxWidthController,
                   keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       hintText: 'Enter maxWidth if desired'),
                 ),
                 TextField(
                   controller: maxHeightController,
                   keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       hintText: 'Enter maxHeight if desired'),
                 ),
@@ -446,7 +512,7 @@ class AspectRatioVideoState extends State<AspectRatioVideo> {
       return Center(
         child: AspectRatio(
           aspectRatio: controller!.value.aspectRatio,
-          child: VideoPlayer(controller!),
+          child: SizedBox(),
         ),
       );
     } else {
