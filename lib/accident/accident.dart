@@ -22,73 +22,20 @@ class Accident extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Sinistro'),
         ),
-        body: //MyStatefulWidget()
-            SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: Row(
-            children: [
-              Column(children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  height: 100,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      DatePicker(
-                          color: Colors.blue,
-                          isStartDate: true,
-                          activeStartDate: true,
-                          correctDate: "",
-                          isDisabled: false,
-                          notifyParent: () => ({}),
-                          days: 1),
+        body: new Column(children: <Widget>[
+          new Text("Text 1"),
+          new Expanded(
+              child: new Align(
+                  alignment: Alignment.bottomCenter,
+                  child: new Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      new Icon(Icons.star),
+                      new Text("Bottom Text")
                     ],
-                  ),
-                ),
-                SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: Row(
-                      children: [
-                        Radio<int>(
-                          activeColor: Colors.blue,
-                          value: 0,
-                          groupValue: 1,
-                          onChanged: (value) {
-                            // setState(() {
-                            //   radioSelected = value;
-                            //   globals.toward = "IN";
-                            // });
-                          },
-                        ),
-                        Text('Incidente',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black))
-                      ],
-                    )),
-                SizedBox(
-                    child: Row(
-                  children: [
-                    Radio<int>(
-                      activeColor: Colors.blue,
-                      value: 1,
-                      groupValue: 0,
-                      onChanged: (value) {
-                        // setState(() {
-                        //   radioSelected = value;
-                        //   globals.toward = "US";
-                        // });
-                      },
-                    ),
-                    Text('Guasto',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black))
-                  ],
-                ))
-              ])
-            ],
-          ),
-        ),
+                  )))
+        ]), //MyStatefulWidget()
+
         backgroundColor: Colors.white);
   }
 }

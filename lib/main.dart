@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:ls_rent/profile/profile.dart';
 import 'package:ls_rent/registration/registration.dart';
 import 'package:ls_rent/services/shared.dart';
+import 'package:ls_rent/stateOfVehicle/stateOfVehicle.dart';
 
 import 'home/home.dart';
 
@@ -34,7 +35,8 @@ void main() async {
       // '/day-off': (BuildContext context) => new DayOff(),
       '/login': (BuildContext context) => new Login(),
       '/profile': (BuildContext context) => new Profile(),
-      '/registration': (BuildContext context) => new Registration()
+      '/registration': (BuildContext context) => new Registration(),
+      '/stateOfVehicle': (BuildContext context) => new StateOfVehicle()
     },
   ));
 }
