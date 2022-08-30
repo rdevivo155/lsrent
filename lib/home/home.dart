@@ -4,7 +4,10 @@ import 'dart:developer';
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
+import 'package:location/location.dart';
 
 import '../../components/button.dart';
 import '../model/response/shift_of_the_day_response.dart';
@@ -121,7 +124,7 @@ List<DataRow> _createRows() {
                 shiftOfTheDayResponse?.data?.employeeTimeStart ?? "")))),
             DataCell(Text('via giordano bruno 163')),
           ])
-        : DataRow(cells: []),
+        : DataRow(cells: [DataCell(Text(''))]),
     shiftOfTheDayResponse?.data?.employeeTimeEnd != null
         ? DataRow(cells: [
             DataCell(Text('FINE')),
@@ -129,12 +132,17 @@ List<DataRow> _createRows() {
                 shiftOfTheDayResponse?.data?.employeeTimeEnd ?? "")))),
             DataCell(Text('via iannielli 103')),
           ])
-        : DataRow(cells: [])
+        : DataRow(cells: [
+            DataCell(Text('')),
+            DataCell(Text('')),
+            DataCell(Text('')),
+          ])
   ];
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   bool isStartedAttendance = false;
+  bool isEndedAttendance = false;
 
   Future editShift() async {
     print("init");
@@ -183,9 +191,39 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   Future downloadData() async {
     print("init");
-    // Position? position = await Geolocator.getLastKnownPosition();
+    bool serviceEnabled;
+    LocationPermission permission;
 
-    // print('${position}');
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled don't continue
+      // accessing the position and request users of the
+      // App to enable the location services.
+      return Future.error('Location services are disabled.');
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.deniedForever) {
+        // Permissions are denied forever, handle appropriately.
+        return Future.error(
+            'Location permissions are permanently denied, we cannot request permissions.');
+      }
+
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try
+        // requesting permissions again (this is also where
+        // Android's shouldShowRequestPermissionRationale
+        // returned true. According to Android guidelines
+        // your App should show an explanatory UI now.
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    // When we reach here, permissions are granted and we can
+    // continue accessing the position of the device.
+    Position pos = await Geolocator.getCurrentPosition();
+    print(pos);
     final authToken = await getBasicAuth();
     try {
       var response = await http.get(
@@ -199,6 +237,28 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         shiftOfTheDayResponse =
             ShiftOfTheDayResponse.fromJson(jsonDecode(response.body));
         await getVehicle();
+        isStartedAttendance =
+            shiftOfTheDayResponse?.data?.employeeTimeStart != null
+                ? true
+                : false;
+        isEndedAttendance =
+            shiftOfTheDayResponse?.data?.employeeTimeEnd != null ? true : false;
+        var arrayString = shiftOfTheDayResponse?.data?.geolocationStart
+            ?.replaceAll("\"", "")
+            .replaceAll(",", ":")
+            .split(":");
+        var lat = "";
+        var lon = shiftOfTheDayResponse?.data?.geolocationStart
+            ?.replaceAll("\"", "")
+            .replaceAll(",", ":")
+            .replaceAll("}", " ")
+            .split(":")[3];
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+            double.parse(lat ?? ""), double.parse(lon ?? ""));
+        print(placemarks);
+        Placemark place = placemarks[0];
+        var address =
+            '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
       } else if (response.statusCode == 401 ||
           response.statusCode == 404 ||
           response.statusCode >= 500) {}
@@ -576,9 +636,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                             children: [
                               GestureDetector(
                                 onTap: () => setState(() {
-                                  isStartedAttendance = !isStartedAttendance;
-                                  editShift();
-
+                                  if (!isEndedAttendance) {
+                                    isStartedAttendance = !isStartedAttendance;
+                                    editShift();
+                                  }
                                   // sendPosition();
                                 }),
                                 child: Container(
@@ -602,9 +663,13 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                                   offset: Offset(0, 4),
                                                 ),
                                               ],
-                                              color: !isStartedAttendance
+                                              color: !isStartedAttendance &&
+                                                      !isEndedAttendance
                                                   ? Color(0xff44b930)
-                                                  : Colors.red,
+                                                  : (isStartedAttendance &&
+                                                          !isEndedAttendance
+                                                      ? Colors.red
+                                                      : Colors.grey),
                                             ),
                                           ),
                                           Positioned.fill(
@@ -644,74 +709,71 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         : SizedBox(),
                   ]),
 
-                  Expanded(
-                      child: Align(
-                          alignment: FractionalOffset.bottomCenter,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 20, horizontal: 0),
-                            child: InkWell(
-                                onTap: () {
-                                  Navigator.of(context)
-                                      .pushNamed('/stateOfVehicle');
-                                },
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: MediaQuery.of(context).size.width -
-                                          20,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(15),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0x3ff4af49),
-                                            blurRadius: 4,
-                                            offset: Offset(0, 3),
-                                          ),
-                                        ],
-                                        color: Colors.amber,
+                  Align(
+                      alignment: FractionalOffset.bottomCenter,
+                      child: Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 20, horizontal: 0),
+                        child: InkWell(
+                            onTap: () {
+                              Navigator.of(context)
+                                  .pushNamed('/stateOfVehicle');
+                            },
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: MediaQuery.of(context).size.width - 20,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0x3ff4af49),
+                                        blurRadius: 4,
+                                        offset: Offset(0, 3),
                                       ),
-                                      margin: const EdgeInsets.only(
-                                          left: 10.0,
-                                          right: 10.0,
-                                          bottom: 0.0,
-                                          top: 0),
-                                      padding: const EdgeInsets.only(
-                                        left: 25,
-                                        right: 29,
-                                        top: 11,
-                                        bottom: 21,
+                                    ],
+                                    color: Colors.amber,
+                                  ),
+                                  margin: const EdgeInsets.only(
+                                      left: 10.0,
+                                      right: 10.0,
+                                      bottom: 0.0,
+                                      top: 0),
+                                  padding: const EdgeInsets.only(
+                                    left: 25,
+                                    right: 29,
+                                    top: 11,
+                                    bottom: 21,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      // Container(
+                                      //   width: 96,
+                                      //   height: 96,
+                                      //   child:
+                                      //       Image.asset('assets/crashedCar.png'),
+                                      // ),
+                                      Text(
+                                        "Stato del veicolo",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                          fontFamily: "Montserrat",
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          // Container(
-                                          //   width: 96,
-                                          //   height: 96,
-                                          //   child:
-                                          //       Image.asset('assets/crashedCar.png'),
-                                          // ),
-                                          Text(
-                                            "Stato del veicolo",
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 14,
-                                              fontFamily: "Montserrat",
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                )),
-                          ))),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )),
+                      )),
                   Expanded(
                       child: Align(
                           alignment: FractionalOffset.bottomCenter,
