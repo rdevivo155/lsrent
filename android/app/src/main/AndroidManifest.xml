@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.ls_rent">
    <application
-        android:label="ls_rent"
+        android:label="LS RENT"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

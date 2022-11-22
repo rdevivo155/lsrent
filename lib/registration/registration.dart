@@ -10,6 +10,7 @@ import 'package:ls_rent/services/network.dart' as network;
 
 import '../model/request/registration_request.dart';
 import '../model/response/registration_response.dart';
+import '../constants/constants.dart';
 
 final emailFormKey = GlobalKey<FormState>(debugLabel: "username");
 final passwordFormKey = GlobalKey<FormState>(debugLabel: "password");
@@ -42,6 +43,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   TextStyle? labelStyle;
   bool loading = false;
   bool error = false;
+  bool _obscureText = true;
 
   @override
   void initState() {
@@ -51,263 +53,347 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     fiscalCodeController.text = "";
   }
 
+  void _toggle() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
+
+  validateFields() {
+    final e = emailFormKey.currentState?.validate();
+    final p = passwordFormKey.currentState?.validate();
+    final f = fiscalCodeFormKey.currentState?.validate();
+
+    if (p == true && e == true && f == true) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> hasNetwork() async {
+    try {
+      final result = await InternetAddress.lookup('example.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
+  }
+
+  Future<RegistrationResponse?> registration(BuildContext context,
+      String username, String password, String taxCode) async {
+    bool isOnline = await hasNetwork();
+    RegistrationRequest request =
+        RegistrationRequest(username, password, taxCode, 1);
+    if (isOnline) {
+      final response = await http.post(
+          Uri.parse(baseUrl + "/api/v1/register"),
+          headers: <String, String>{
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: {
+            "username": username,
+            "password": password,
+            "tax_code": taxCode,
+            "terms": "1"
+          });
+      print(request.toJson());
+
+      print(response.body);
+
+      if (response.statusCode == 201) {
+        loading = false;
+        RegistrationResponse registrationResponse =
+            RegistrationResponse.fromJson(jsonDecode(response.body));
+
+        print(registrationResponse.toJson());
+        AlertDialog(
+          title: Text("Registrazione"),
+          content: Text("La registrazione è stata effettuate con successo!"),
+          actions: [
+            ElevatedButton(
+              child: Text("Ok"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            )
+          ],
+        );
+        return registrationResponse;
+      } else {
+        loading = false;
+        AlertDialog(
+          title: Text("Errore"),
+          content: Text("I dati inseriti sono errati!"),
+          actions: [
+            ElevatedButton(
+              child: Text("Ok"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            )
+          ],
+        );
+        // checkError(response.statusCode);
+        return null;
+      }
+    } else {
+      loading = false;
+      // checkError(0);
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final String emailError = "Inserire l'email";
     final String passwordError = "Inserire la password";
+    final String taxCodeError = "Inserire il codice fiscale";
 
     return Padding(
         padding: const EdgeInsets.all(10),
-        child: ListView(
-          children: <Widget>[
-            Container(
+        child: loading
+            ? Container(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
                 alignment: Alignment.center,
-                padding: const EdgeInsets.all(10),
-                child: Padding(
-                    padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
-                    child: Image.asset('assets/logo.png'))),
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 100, 20, 20),
-              child: Form(
-                key: emailFormKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: TextFormField(
-                  controller: nameController,
-                  cursorColor: Colors.white,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      Future.delayed(Duration.zero, () async {
-                        setState(() {
-                          error = true;
-                        });
-                      });
+                child: const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3.5,
+                    )))
+            : ListView(
+                children: <Widget>[
+                  Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(10),
+                      child: Padding(
+                          padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
+                          child: Image.asset('assets/logo.png'))),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 100, 20, 20),
+                    child: Form(
+                      key: emailFormKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: TextFormField(
+                        controller: nameController,
+                        cursorColor: Colors.white,
+                        validator: (value) {
+                          if (value?.length == 8) {
+                            Future.delayed(Duration.zero, () async {
+                              setState(() {
+                                error = true;
+                              });
+                            });
 
-                      return emailError;
-                    }
-                    return null;
-                  },
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  autofocus: false,
-                  style: TextStyle(color: Colors.white),
-                  textCapitalization: TextCapitalization.none,
-                  decoration: InputDecoration(
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    focusColor: Colors.white,
-                    prefixIcon:
-                        Icon(Icons.account_circle_rounded, color: Colors.white),
-                    enabledBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    labelText: 'Email',
-                    labelStyle: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 18,
-                        color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-              child: Form(
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                key: passwordFormKey,
-                child: TextFormField(
-                  obscureText: true,
-                  cursorColor: Colors.white,
-                  controller: passwordController,
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      Future.delayed(Duration.zero, () async {
-                        setState(() {
-                          error = true;
-                        });
-                      });
-
-                      return passwordError;
-                    }
-                    return null;
-                  },
-                  autofocus: false,
-                  autocorrect: false,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    focusColor: Colors.white,
-                    prefixIcon: Icon(Icons.lock, color: Colors.white),
-                    enabledBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    labelText: 'Password',
-                    labelStyle: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 18,
-                        color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-              child: Form(
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                key: fiscalCodeFormKey,
-                child: TextFormField(
-                  obscureText: false,
-                  cursorColor: Colors.white,
-                  controller: fiscalCodeController,
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      Future.delayed(Duration.zero, () async {
-                        setState(() {
-                          error = true;
-                        });
-                      });
-
-                      return passwordError;
-                    }
-                    return null;
-                  },
-                  autofocus: false,
-                  autocorrect: false,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    focusColor: Colors.white,
-                    prefixIcon: Icon(Icons.account_box, color: Colors.white),
-                    enabledBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    labelText: 'Codice fiscale',
-                    labelStyle: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 18,
-                        color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-            Container(
-                height: 80,
-                padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
-                child: ElevatedButton(
-                  child: const Text('INVIA',
-                      style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800)),
-                  style: ElevatedButton.styleFrom(primary: Color(0xfff4af49)),
-                  onPressed: (loading)
-                      ? null
-                      : () async {
-                          print(nameController.text);
-                          print(passwordController.text);
-                          // network.
-                          if (validateFields()) {
-                            registration(
-                                context,
-                                nameController.text,
-                                passwordController.text,
-                                fiscalCodeController.text);
+                            return "Inserire una password min 8 caratteri";
                           }
+                          if (value == null || value.isEmpty) {
+                            Future.delayed(Duration.zero, () async {
+                              setState(() {
+                                error = true;
+                              });
+                            });
 
-                          // loginAuth(
-                          //         nameController.text, passwordController.text)
-                          //     .then((value) {
-                          //   if (value?.accessToken != "" &&
-                          //       value?.accessToken != null) {
-                          //     Navigator.of(context).popAndPushNamed('/home');
-                          //   }
-                          // });
+                            return emailError;
+                          }
+                          return null;
                         },
-                )),
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        autofocus: false,
+                        style: TextStyle(color: Colors.white),
+                        textCapitalization: TextCapitalization.none,
+                        decoration: InputDecoration(
+                          focusedBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          focusColor: Colors.white,
+                          prefixIcon: Icon(Icons.account_circle_rounded,
+                              color: Colors.white),
+                          enabledBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          labelText: 'Email',
+                          labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 18,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                    child: Form(
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      key: passwordFormKey,
+                      child: TextFormField(
+                        obscureText: _obscureText ? true : false,
+                        cursorColor: Colors.white,
+                        controller: passwordController,
+                        style: TextStyle(color: Colors.white),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            Future.delayed(Duration.zero, () async {
+                              setState(() {
+                                error = true;
+                              });
+                            });
 
-            // Container(
-            //     height: 80,
-            //     padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-            //     child: TextButton(
-            //       child: const Text(
-            //         'Password dimenticata',
-            //         style: TextStyle(fontSize: 16, color: Colors.white),
-            //       ),
-            //       onPressed: () {
-            //         //signup screen
-            //       },
-            //     ))
-          ],
-        ));
-  }
-}
+                            return passwordError;
+                          }
+                          return null;
+                        },
+                        autofocus: false,
+                        autocorrect: false,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: InputDecoration(
+                          focusedBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          focusColor: Colors.white,
+                          prefixIcon: Icon(Icons.lock, color: Colors.white),
+                          suffixIcon: InkWell(
+                            onTap: _toggle,
+                            child: Icon(
+                              _obscureText
+                                  ? Icons.remove_red_eye_outlined
+                                  : Icons.remove_red_eye_sharp,
+                              size: 18.0,
+                              color: Colors.white,
+                            ),
+                          ),
+                          enabledBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          labelText: 'Password',
+                          labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 18,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                    child: Form(
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      key: fiscalCodeFormKey,
+                      child: TextFormField(
+                        obscureText: false,
+                        cursorColor: Colors.white,
+                        controller: fiscalCodeController,
+                        style: TextStyle(color: Colors.white),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            Future.delayed(Duration.zero, () async {
+                              setState(() {
+                                error = true;
+                              });
+                            });
 
-validateFields() {
-  final e = emailFormKey.currentState!.validate();
-  final p = passwordFormKey.currentState!.validate();
-  if (p == true && e == true) {
-    return true;
-  }
-  return false;
-}
-
-Future<bool> hasNetwork() async {
-  try {
-    final result = await InternetAddress.lookup('example.com');
-    return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-  } on SocketException catch (_) {
-    return false;
-  }
-}
-
-Future<RegistrationResponse?> registration(BuildContext context,
-    String username, String password, String taxCode) async {
-  bool isOnline = await hasNetwork();
-  RegistrationRequest request =
-      RegistrationRequest(username, password, taxCode, 1);
-  if (isOnline) {
-    final response = await http.post(
-        Uri.parse("https://api.lsrent.ml/api/v1/register"),
-        headers: <String, String>{
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: {
-          "username": "prova@prova.it",
-          "password": "Eg7fBAPsn2LET9",
-          "tax_code": "CSRNGL75C22F839W",
-          "terms": "1"
-        });
-    print(request.toJson());
-
-    print(response.body);
-
-    if (response.statusCode == 201) {
-      RegistrationResponse registrationResponse =
-          RegistrationResponse.fromJson(jsonDecode(response.body));
-
-      print(registrationResponse.toJson());
-
-      Navigator.of(context).popAndPushNamed('/login');
-
-      return registrationResponse;
-    } else {
-      // checkError(response.statusCode);
-      return null;
-    }
-  } else {
-    // checkError(0);
-    return null;
+                            return taxCodeError;
+                          }
+                          return null;
+                        },
+                        autofocus: false,
+                        autocorrect: false,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: InputDecoration(
+                          focusedBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          focusColor: Colors.white,
+                          prefixIcon:
+                              Icon(Icons.account_box, color: Colors.white),
+                          enabledBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          labelText: 'Codice fiscale',
+                          labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 18,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                      height: 80,
+                      padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
+                      child: ElevatedButton(
+                        child: const Text('INVIA',
+                            style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800)),
+                        style: ElevatedButton.styleFrom(
+                            primary: validateFields()
+                                ? Color(0xfff4af49)
+                                : Colors.blueGrey),
+                        onPressed: (loading)
+                            ? null
+                            : () async {
+                                print(nameController.text);
+                                print(passwordController.text);
+                                loading = true;
+                                // network.
+                                if (validateFields()) {
+                                  var registrationResponse = await registration(
+                                      context,
+                                      nameController.text,
+                                      passwordController.text,
+                                      fiscalCodeController.text);
+                                  if (registrationResponse != null) {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text("Attenzione"),
+                                            content: Text(
+                                                "La registrazione è stata effettuate con successo!"),
+                                            actions: [
+                                              ElevatedButton(
+                                                child: Text("Ok"),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              )
+                                            ],
+                                          );
+                                        });
+                                  } else {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text("Attenzione"),
+                                            content: Text(
+                                                "I dati inseriti sono errati!"),
+                                            actions: [
+                                              ElevatedButton(
+                                                child: Text("Ok"),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              )
+                                            ],
+                                          );
+                                        });
+                                  }
+                                }
+                              },
+                      )),
+                ],
+              ));
   }
 }

@@ -7,6 +7,7 @@ import 'package:ls_rent/constants/api.dart';
 import 'package:ls_rent/model/response/login_response.dart';
 import 'package:ls_rent/services/shared.dart';
 import 'package:ls_rent/services/network.dart' as network;
+import '../constants/constants.dart';
 
 final emailFormKey = GlobalKey<FormState>(debugLabel: "username");
 final passwordFormKey = GlobalKey<FormState>(debugLabel: "password");
@@ -32,235 +33,325 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   TextStyle? labelStyle;
   bool loading = false;
-  bool error = false;
+  bool errorEmail = false;
+  bool errorPassword = false;
+  bool _obscureText = true;
 
   @override
   void initState() {
     super.initState();
+    loading = false;
     nameController.text = "";
     passwordController.text = "";
   }
 
+  void _toggle() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
+
+  validateFields() {
+    var e = emailFormKey.currentState?.validate();
+    var p = passwordFormKey.currentState?.validate();
+    if (p == true && e == true) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> hasNetwork() async {
+    try {
+      final result = await InternetAddress.lookup('example.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
+  }
+
+  Future<LoginResponse?> loginAuth(
+      BuildContext context, String username, String password) async {
+    bool isOnline = await hasNetwork();
+    if (isOnline) {
+      final response = await http.post(Uri.parse(baseUrl + "/api/v1/login"),
+          headers: <String, String>{
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: {
+            'username': username,
+            'password': password
+          });
+
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        LoginResponse loginResponse =
+            LoginResponse.fromJson(jsonDecode(response.body));
+        print(loginResponse.toJson());
+        setBasicAuth(loginResponse.data?.accessToken ?? "");
+        setIsLogged(true);
+        setState(() {
+          loading = false;
+        });
+        Navigator.of(context).popAndPushNamed('/home');
+        return loginResponse;
+      } else {
+        //checkError(response.statusCode);
+        setState(() {
+          loading = false;
+        });
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("Attenzione"),
+                content: Text("L'email o la password sono errate"),
+                actions: [
+                  ElevatedButton(
+                    child: Text("Ok"),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              );
+            });
+
+        return null;
+      }
+    } else {
+      setState(() {
+        loading = false;
+      }); // checkError(0);
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Attenzione"),
+              content: Text("Assenza di rete"),
+              actions: [
+                ElevatedButton(
+                  child: Text("Ok"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final String emailError = "Inserire l'email";
+    final String emailError = "Inserire un'email valida";
     final String passwordError = "Inserire la password";
 
     return Padding(
         padding: const EdgeInsets.all(10),
-        child: ListView(
-          children: <Widget>[
-            Container(
+        child: loading
+            ? Container(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
                 alignment: Alignment.center,
-                padding: const EdgeInsets.all(10),
-                child: Padding(
-                    padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
-                    child: Image.asset('assets/logo.png'))),
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 150, 20, 20),
-              child: Form(
-                key: emailFormKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: TextFormField(
-                  controller: nameController,
-                  cursorColor: Colors.white,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      Future.delayed(Duration.zero, () async {
-                        setState(() {
-                          error = true;
-                        });
-                      });
+                child: const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3.5,
+                    )))
+            : ListView(
+                children: <Widget>[
+                  Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(10),
+                      child: Padding(
+                          padding: EdgeInsets.fromLTRB(20, 40, 20, 20),
+                          child: Image.asset(
+                            'assets/logoApp.png',
+                            width: 120,
+                            height: 120,
+                          ))),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    child: Form(
+                      key: emailFormKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: TextFormField(
+                        controller: nameController,
+                        cursorColor: Colors.white,
+                        validator: (value) {
+                          String pattern =
+                              r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+                          RegExp regex = RegExp(pattern);
 
-                      return emailError;
-                    }
-                    return null;
-                  },
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  autofocus: false,
-                  style: TextStyle(color: Colors.white),
-                  textCapitalization: TextCapitalization.none,
-                  decoration: InputDecoration(
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    focusColor: Colors.white,
-                    prefixIcon:
-                        Icon(Icons.account_circle_rounded, color: Colors.white),
-                    enabledBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    labelText: 'Email',
-                    labelStyle: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 18,
-                        color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-              child: Form(
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                key: passwordFormKey,
-                child: TextFormField(
-                  obscureText: true,
-                  cursorColor: Colors.white,
-                  controller: passwordController,
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      Future.delayed(Duration.zero, () async {
-                        setState(() {
-                          error = true;
-                        });
-                      });
+                          if (value == null ||
+                              value.isEmpty ||
+                              !regex.hasMatch(value)) {
+                            Future.delayed(Duration(milliseconds: 4000),
+                                () async {
+                              setState(() {
+                                errorEmail = true;
+                              });
+                            });
 
-                      return passwordError;
-                    }
-                    return null;
-                  },
-                  autofocus: false,
-                  autocorrect: false,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    focusColor: Colors.white,
-                    prefixIcon: Icon(Icons.lock, color: Colors.white),
-                    enabledBorder: const UnderlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: Colors.white, width: 1.0),
-                    ),
-                    labelText: 'Password',
-                    labelStyle: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 18,
-                        color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-            Container(
-                height: 80,
-                padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
-                child: ElevatedButton(
-                  child: const Text('ACCEDI',
-                      style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800)),
-                  style: ElevatedButton.styleFrom(primary: Color(0xfff4af49)),
-                  onPressed: (loading)
-                      ? null
-                      : () async {
-                          print(nameController.text);
-                          print(passwordController.text);
-                          // network.
-                          if (validateFields()) {
-                            loginAuth(context, nameController.text,
-                                passwordController.text);
+                            return emailError;
                           }
-
-                          // loginAuth(
-                          //         nameController.text, passwordController.text)
-                          //     .then((value) {
-                          //   if (value?.accessToken != "" &&
-                          //       value?.accessToken != null) {
-                          //     Navigator.of(context).popAndPushNamed('/home');
-                          //   }
-                          // });
+                          return null;
                         },
-                )),
-            Container(
-                height: 60,
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                child: ElevatedButton(
-                  child: const Text('REGISTRATI',
-                      style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800)),
-                  style: ElevatedButton.styleFrom(
-                      primary: Color(0xff569CDD),
-                      side: BorderSide(width: 1.0, color: Colors.white)),
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/registration');
-                  },
-                )),
-            // Container(
-            //     height: 80,
-            //     padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-            //     child: TextButton(
-            //       child: const Text(
-            //         'Password dimenticata',
-            //         style: TextStyle(fontSize: 16, color: Colors.white),
-            //       ),
-            //       onPressed: () {
-            //         //signup screen
-            //       },
-            //     ))
-          ],
-        ));
-  }
-}
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        autofocus: false,
+                        style: TextStyle(color: Colors.white),
+                        textCapitalization: TextCapitalization.none,
+                        decoration: InputDecoration(
+                          focusedBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          focusColor: Colors.white,
+                          prefixIcon: Icon(Icons.account_circle_rounded,
+                              color: Colors.white),
+                          enabledBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          labelText: 'Email',
+                          labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 18,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                    child: Form(
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      key: passwordFormKey,
+                      child: TextFormField(
+                        obscureText: _obscureText ? true : false,
+                        cursorColor: Colors.white,
+                        controller: passwordController,
+                        style: TextStyle(color: Colors.white),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            Future.delayed(Duration.zero, () async {
+                              setState(() {
+                                errorPassword = true;
+                              });
+                            });
 
-validateFields() {
-  final e = emailFormKey.currentState!.validate();
-  final p = passwordFormKey.currentState!.validate();
-  if (p == true && e == true) {
-    return true;
-  }
-  return false;
-}
+                            return passwordError;
+                          }
+                          return null;
+                        },
+                        autofocus: false,
+                        autocorrect: false,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: InputDecoration(
+                          focusedBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          focusColor: Colors.white,
+                          prefixIcon: Icon(Icons.lock, color: Colors.white),
+                          suffixIcon: InkWell(
+                            onTap: _toggle,
+                            child: Icon(
+                              _obscureText
+                                  ? Icons.remove_red_eye_outlined
+                                  : Icons.remove_red_eye_sharp,
+                              size: 18.0,
+                              color: Colors.white,
+                            ),
+                          ),
+                          enabledBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          labelText: 'Password',
+                          labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 18,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                      height: 80,
+                      padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
+                      child: ElevatedButton(
+                        child: const Text('ACCEDI',
+                            style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800)),
+                        style: ElevatedButton.styleFrom(
+                          primary: validateFields() && !loading
+                              ? Color(0xfff4af49)
+                              : Colors.blueGrey,
+                          splashFactory:
+                              !validateFields() ? NoSplash.splashFactory : null,
+                        ),
+                        onPressed: (loading)
+                            ? null
+                            : () async {
+                                print(nameController.text);
+                                print(passwordController.text);
+                                // network.
+                                if (validateFields()) {
+                                  setState(() {
+                                    loading = true;
+                                  });
+                                  loginAuth(context, nameController.text,
+                                      passwordController.text);
+                                }
+                                return null;
 
-Future<bool> hasNetwork() async {
-  try {
-    final result = await InternetAddress.lookup('example.com');
-    return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-  } on SocketException catch (_) {
-    return false;
-  }
-}
-
-Future<LoginResponse?> loginAuth(
-    BuildContext context, String username, String password) async {
-  bool isOnline = await hasNetwork();
-  if (isOnline) {
-    final response = await http.post(
-        Uri.parse("https://api.lsrent.ml/api/v1/login"),
-        headers: <String, String>{
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: {
-          'username': username,
-          'password': password
-        });
-
-    print(response.body);
-
-    if (response.statusCode == 200) {
-      LoginResponse loginResponse =
-          LoginResponse.fromJson(jsonDecode(response.body));
-
-      print(loginResponse.toJson());
-      setBasicAuth(loginResponse.data?.accessToken ?? "");
-      setIsLogged(true);
-      Navigator.of(context).popAndPushNamed('/home');
-
-      return loginResponse;
-    } else {
-      // checkError(response.statusCode);
-      return null;
-    }
-  } else {
-    // checkError(0);
-    return null;
+                                // loginAuth(
+                                //         nameController.text, passwordController.text)
+                                //     .then((value) {
+                                //   if (value?.accessToken != "" &&
+                                //       value?.accessToken != null) {
+                                //     Navigator.of(context).popAndPushNamed('/home');
+                                //   }
+                                // });
+                              },
+                      )),
+                  Container(
+                      height: 60,
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                      child: ElevatedButton(
+                        child: const Text('REGISTRATI',
+                            style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800)),
+                        style: ElevatedButton.styleFrom(
+                            primary: Color(0xff569CDD),
+                            side: BorderSide(width: 1.0, color: Colors.white)),
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/registration');
+                        },
+                      )),
+                  // Container(
+                  //     height: 80,
+                  //     padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                  //     child: TextButton(
+                  //       child: const Text(
+                  //         'Password dimenticata',
+                  //         style: TextStyle(fontSize: 16, color: Colors.white),
+                  //       ),
+                  //       onPressed: () {
+                  //         //signup screen
+                  //       },
+                  //     ))
+                ],
+              ));
   }
 }

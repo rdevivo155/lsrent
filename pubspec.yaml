@@ -37,10 +37,24 @@ dependencies:
   intl: ^0.17.0
   location: ^4.4.0
   geocoding: ^2.0.4
+  month_picker_dialog: ^0.4.0
+  flutter_launcher_icons: "^0.11.0"
+  flutter_native_splash: ^2.0.1+1
 
+flutter_native_splash:
+  color: "#569CDD"
+  image: "assets/logoApp.png"
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+flutter_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path_android: "assets/logo-color.png"
+  image_path_ios: "assets/logo-color.png"
+  image_path: "assets/logo-color.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -61,4 +75,7 @@ flutter:
     - assets/dayOff.png
     - assets/wallet.png
     - assets/logo.png
+    - assets/logoTrasp.png
+    - assets/logoApp.png
+    - assets/logo-color.png
 

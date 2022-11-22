@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart';
+import '../constants/constants.dart';
 
 import '../../components/button.dart';
 import '../model/response/shift_of_the_day_response.dart';
@@ -20,6 +20,9 @@ import 'package:geolocator/geolocator.dart';
 ShiftOfTheDayResponse? shiftOfTheDayResponse;
 VehicleResponse? vehicleResponse;
 VehicleModelResponse? vehicleModelResponse;
+String addressVehicle = "";
+String address1 = "";
+String address2 = "";
 
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
@@ -104,7 +107,11 @@ List<Card> _buildGridCards(BuildContext context) {
 // }
 
 DataTable _createDataTable() {
-  return DataTable(columns: _createColumns(), rows: _createRows());
+  return DataTable(
+    columns: _createColumns(),
+    rows: _createRows(),
+    dataRowHeight: 70,
+  );
 }
 
 List<DataColumn> _createColumns() {
@@ -122,7 +129,7 @@ List<DataRow> _createRows() {
             DataCell(Text('INIZIO')),
             DataCell(Text(DateFormat("HH:mm").format(DateTime.parse(
                 shiftOfTheDayResponse?.data?.employeeTimeStart ?? "")))),
-            DataCell(Text('via giordano bruno 163')),
+            DataCell(Text(address1)),
           ])
         : DataRow(cells: [DataCell(Text(''))]),
     shiftOfTheDayResponse?.data?.employeeTimeEnd != null
@@ -130,7 +137,7 @@ List<DataRow> _createRows() {
             DataCell(Text('FINE')),
             DataCell(Text(DateFormat("HH:mm").format(DateTime.parse(
                 shiftOfTheDayResponse?.data?.employeeTimeEnd ?? "")))),
-            DataCell(Text('via iannielli 103')),
+            DataCell(Text(address2)),
           ])
         : DataRow(cells: [
             DataCell(Text('')),
@@ -144,18 +151,26 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   bool isStartedAttendance = false;
   bool isEndedAttendance = false;
 
+  @override
+  void initState() {
+    super.initState();
+    Timer.periodic(Duration(seconds: 60), (timer) async {
+      downloadData();
+    });
+  }
+
   Future editShift() async {
     print("init");
-    // Position? position = await Geolocator.getLastKnownPosition();
+    Position? position = await Geolocator.getLastKnownPosition();
 
-    // print('${position}');
+    print('${position}');
     final authToken = await getBasicAuth();
     print(authToken);
     try {
       var response = await http
           .put(
-              Uri.parse(
-                  "https://api.lsrent.ml/api/v1/shifts/${shiftOfTheDayResponse!.data!.id}"),
+              Uri.parse(baseUrl +
+                  "/api/v1/shifts/${shiftOfTheDayResponse!.data!.id}"),
               headers: <String, String>{
                 'Authorization': "Bearer " + authToken!
               },
@@ -163,12 +178,12 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                   ? {
                       "employee_time_start": DateTime.now().toIso8601String(),
                       "employee_geolocation_start":
-                          "{\"lat\":40.90834,\"lng\":14.34993}"
+                          "{\"lat\":${position?.latitude},\"lng\":${position?.longitude}}"
                     }
                   : {
                       "employee_time_end": DateTime.now().toIso8601String(),
                       "employee_geolocation_end":
-                          "{\"lat\":40.90834,\"lng\":14.34993}"
+                          "{\"lat\":${position?.latitude},\"lng\":${position?.longitude}}"
                     })
           .timeout((const Duration(seconds: 10)));
 
@@ -190,7 +205,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Future downloadData() async {
-    print("init");
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -226,16 +240,17 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     print(pos);
     final authToken = await getBasicAuth();
     try {
-      var response = await http.get(
-          Uri.parse("https://api.lsrent.ml/api/v1/shifts/me"),
+      var response = await http.get(Uri.parse(baseUrl + "/api/v1/shifts/me"),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': "Bearer " + authToken!
+            'Authorization': "Bearer " + (authToken ?? "")
           }).timeout((const Duration(seconds: 10)));
 
       if (response.statusCode == 200) {
         shiftOfTheDayResponse =
             ShiftOfTheDayResponse.fromJson(jsonDecode(response.body));
+        setEmployee(shiftOfTheDayResponse?.data?.employeeId.toString() ?? "");
+
         await getVehicle();
         isStartedAttendance =
             shiftOfTheDayResponse?.data?.employeeTimeStart != null
@@ -243,22 +258,64 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 : false;
         isEndedAttendance =
             shiftOfTheDayResponse?.data?.employeeTimeEnd != null ? true : false;
-        var arrayString = shiftOfTheDayResponse?.data?.geolocationStart
+        var latV = shiftOfTheDayResponse?.data?.geolocationStart
             ?.replaceAll("\"", "")
             .replaceAll(",", ":")
-            .split(":");
-        var lat = "";
-        var lon = shiftOfTheDayResponse?.data?.geolocationStart
+            .replaceAll("}", " ")
+            .split(":")[1];
+        var lonV = shiftOfTheDayResponse?.data?.geolocationStart
             ?.replaceAll("\"", "")
             .replaceAll(",", ":")
             .replaceAll("}", " ")
             .split(":")[3];
-        List<Placemark> placemarks = await placemarkFromCoordinates(
-            double.parse(lat ?? ""), double.parse(lon ?? ""));
-        print(placemarks);
-        Placemark place = placemarks[0];
-        var address =
-            '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
+        List<Placemark> placemarksV = await placemarkFromCoordinates(
+            double.parse(latV ?? ""), double.parse(lonV ?? ""));
+        print(placemarksV);
+        Placemark placeV = placemarksV[0];
+        addressVehicle = '${placeV.street}, ${placeV.locality}';
+
+        var arrayString = shiftOfTheDayResponse?.data?.employeeGeolocationStart
+            ?.replaceAll("\"", "")
+            .replaceAll(",", ":")
+            .split(":");
+        print(arrayString);
+        var lat = shiftOfTheDayResponse?.data?.employeeGeolocationStart
+            ?.replaceAll("\"", "")
+            .replaceAll(",", ":")
+            .replaceAll("}", " ")
+            .split(":")[1];
+        var lon = shiftOfTheDayResponse?.data?.employeeGeolocationStart
+            ?.replaceAll("\"", "")
+            .replaceAll(",", ":")
+            .replaceAll("}", " ")
+            .split(":")[3];
+        if (lat != null) {
+          List<Placemark> placemarks = await placemarkFromCoordinates(
+              double.parse(lat), double.parse(lon ?? ""));
+          print(placemarks);
+          Placemark place = placemarks[0];
+          address1 =
+              '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
+        }
+
+        var lat2 = shiftOfTheDayResponse?.data?.employeeGeolocationEnd
+            ?.replaceAll("\"", "")
+            .replaceAll(",", ":")
+            .replaceAll("}", " ")
+            .split(":")[1];
+        var lon2 = shiftOfTheDayResponse?.data?.employeeGeolocationEnd
+            ?.replaceAll("\"", "")
+            .replaceAll(",", ":")
+            .replaceAll("}", " ")
+            .split(":")[3];
+
+        if (lat2 != null) {
+          List<Placemark> placemarks2 = await placemarkFromCoordinates(
+              double.parse(lat2), double.parse(lon2 ?? ""));
+          Placemark place2 = placemarks2[0];
+          address2 =
+              '${place2.street}, ${place2.subLocality}, ${place2.locality}, ${place2.postalCode}, ${place2.country}';
+        }
       } else if (response.statusCode == 401 ||
           response.statusCode == 404 ||
           response.statusCode >= 500) {}
@@ -277,8 +334,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     final authToken = await getBasicAuth();
     try {
       var response = await http.get(
-          Uri.parse(
-              "https://api.lsrent.ml/api/v1/vehicles/${shiftOfTheDayResponse!.data!.vehicleId}"),
+          Uri.parse(baseUrl +
+              "/api/v1/vehicles/${shiftOfTheDayResponse!.data!.vehicleId}"),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': "Bearer " + authToken!
@@ -286,6 +343,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
       if (response.statusCode == 200) {
         vehicleResponse = VehicleResponse.fromJson(jsonDecode(response.body));
+        setVehicle(vehicleResponse?.data?.vehicleModelId.toString() ?? "");
+        setLocation(vehicleResponse?.data?.officeLocationId.toString() ?? "");
         await getVehicleModel();
       } else if (response.statusCode == 401 || response.statusCode >= 500) {}
       return response;
@@ -303,8 +362,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     final authToken = await getBasicAuth();
     try {
       var response = await http.get(
-          Uri.parse(
-              "https://api.lsrent.ml/api/v1/vehicle-models/${vehicleResponse!.data!.vehicleModelId}"),
+          Uri.parse(baseUrl +
+              "/api/v1/vehicle-models/${vehicleResponse!.data!.vehicleModelId}"),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': "Bearer " + authToken!
@@ -328,8 +387,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     // print('${position}');
     final authToken = await getBasicAuth();
     try {
-      var response = await http.get(
-          Uri.parse("https://api.lsrent.ml/api/v1/shifts/me"),
+      var response = await http.get(Uri.parse(baseUrl + "/api/v1/shifts/me"),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': "Bearer " + authToken!
@@ -358,6 +416,18 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                   actions: <Widget>[
                     GestureDetector(
                       onTap: () {
+                        Navigator.of(context).pushNamed('/list');
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 20.0),
+                        child: Icon(
+                          Icons.list_alt,
+                          size: 26.0,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
                         Navigator.of(context).pushNamed('/profile');
                       },
                       child: Padding(
@@ -370,17 +440,16 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     ),
                   ],
                 ),
-                body: Column(children: <Widget>[
-                  Column(children: <Widget>[
-                    const SizedBox(height: 8.0),
-                    shiftOfTheDayResponse != null
-                        ? Column(children: <Widget>[
-                            Padding(
-                                padding: EdgeInsets.fromLTRB(20, 10, 20, 0),
-                                child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: [
-                                      Flexible(
+                body: shiftOfTheDayResponse != null
+                    ? Column(children: <Widget>[
+                        Column(children: <Widget>[
+                          const SizedBox(height: 8.0),
+                          shiftOfTheDayResponse != null
+                              ? Column(children: <Widget>[
+                                  Padding(
+                                      padding:
+                                          EdgeInsets.fromLTRB(20, 10, 20, 0),
+                                      child: Flexible(
                                           flex: 100,
                                           child: Container(
                                             width: MediaQuery.of(context)
@@ -396,229 +465,632 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                               ),
                                               textAlign: TextAlign.center,
                                             ),
-                                          ))
-                                    ])),
-                            Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 20),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Flexible(
-                                        flex: 50,
-                                        child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          child: Column(children: <Widget>[
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Image.asset(
-                                                  'assets/shipping.png'),
-                                            )
-                                          ]),
-                                        )),
-                                    Flexible(
-                                        flex: 50,
-                                        child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          child: Column(children: <Widget>[
-                                            SizedBox(height: 40.0),
-                                            Align(
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  vehicleModelResponse
-                                                          ?.data?.brand ??
-                                                      "",
-                                                  style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 16,
-                                                    fontFamily: "Montserrat",
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                  textAlign: TextAlign.left,
-                                                )),
-                                            Align(
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  vehicleModelResponse
-                                                          ?.data?.description ??
-                                                      "",
-                                                  style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 16,
-                                                    fontFamily: "Montserrat",
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                  textAlign: TextAlign.left,
-                                                )),
-                                            Align(
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  vehicleResponse
-                                                          ?.data?.carPlate ??
-                                                      "",
-                                                  style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 16,
-                                                    fontFamily: "Montserrat",
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                  textAlign: TextAlign.left,
-                                                )),
-                                          ]),
-                                        )),
+                                          ))),
+                                  Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 20),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.max,
+                                        children: [
+                                          Flexible(
+                                              flex: 50,
+                                              child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.5,
+                                                child:
+                                                    Column(children: <Widget>[
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            8.0),
+                                                    child: Image.asset(
+                                                        'assets/shipping.png'),
+                                                  )
+                                                ]),
+                                              )),
+                                          Flexible(
+                                              flex: 50,
+                                              child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.5,
+                                                child:
+                                                    Column(children: <Widget>[
+                                                  Align(
+                                                      alignment:
+                                                          Alignment.centerLeft,
+                                                      child: Text(
+                                                        vehicleModelResponse
+                                                                ?.data?.brand ??
+                                                            "",
+                                                        style: TextStyle(
+                                                          color: Colors.black,
+                                                          fontSize: 16,
+                                                          fontFamily:
+                                                              "Montserrat",
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.left,
+                                                      )),
+                                                  Align(
+                                                      alignment:
+                                                          Alignment.centerLeft,
+                                                      child: Text(
+                                                        vehicleModelResponse
+                                                                ?.data
+                                                                ?.description ??
+                                                            "",
+                                                        style: TextStyle(
+                                                          color: Colors.black,
+                                                          fontSize: 16,
+                                                          fontFamily:
+                                                              "Montserrat",
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.left,
+                                                      )),
+                                                  Align(
+                                                      alignment:
+                                                          Alignment.centerLeft,
+                                                      child: Text(
+                                                        vehicleResponse?.data
+                                                                ?.carPlate ??
+                                                            "",
+                                                        style: TextStyle(
+                                                          color: Colors.black,
+                                                          fontSize: 16,
+                                                          fontFamily:
+                                                              "Montserrat",
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.left,
+                                                      )),
+                                                ]),
+                                              )),
+                                        ],
+                                      )),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Align(
+                                      alignment: Alignment.center,
+                                      child: Text(addressVehicle,
+                                          textAlign: TextAlign.center),
+                                    ),
+                                  ),
+                                ])
+                              : Column(),
+                          shiftOfTheDayResponse != null
+                              ? Column(
+                                  children: <Widget>[
+                                    Padding(
+                                        padding:
+                                            EdgeInsets.symmetric(horizontal: 0),
+                                        child: Row(
+                                            mainAxisSize: MainAxisSize.max,
+                                            children: [
+                                              Flexible(
+                                                flex: 50,
+                                                child: Container(
+                                                  width: MediaQuery.of(context)
+                                                      .size
+                                                      .width,
+                                                  child: Column(
+                                                      children: <Widget>[
+                                                        SizedBox(
+                                                          height: 20,
+                                                        ),
+                                                        Row(children: [
+                                                          Flexible(
+                                                              flex: 50,
+                                                              child: Container(
+                                                                  child: Column(
+                                                                      children: [
+                                                                    Align(
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .center,
+                                                                        child:
+                                                                            Text(
+                                                                          "INIZIO TURNO:",
+                                                                          style:
+                                                                              TextStyle(
+                                                                            color:
+                                                                                Colors.black,
+                                                                            fontSize:
+                                                                                16,
+                                                                            fontFamily:
+                                                                                "Montserrat",
+                                                                            fontWeight:
+                                                                                FontWeight.w700,
+                                                                          ),
+                                                                          textAlign:
+                                                                              TextAlign.left,
+                                                                        ))
+                                                                  ]))),
+                                                          Flexible(
+                                                              flex: 50,
+                                                              child: Container(
+                                                                  child: Column(
+                                                                      children: [
+                                                                    Align(
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .centerLeft,
+                                                                        child:
+                                                                            Text(
+                                                                          shiftOfTheDayResponse != null
+                                                                              ? shiftOfTheDayResponse!.data!.timeStart!.split(" ")[1].substring(0, 5)
+                                                                              : "",
+                                                                          style:
+                                                                              TextStyle(
+                                                                            color:
+                                                                                Colors.black,
+                                                                            fontSize:
+                                                                                16,
+                                                                            fontFamily:
+                                                                                "Montserrat",
+                                                                            fontWeight:
+                                                                                FontWeight.w500,
+                                                                          ),
+                                                                          textAlign:
+                                                                              TextAlign.left,
+                                                                        ))
+                                                                  ])))
+                                                        ]),
+                                                        Row(children: [
+                                                          Flexible(
+                                                              flex: 50,
+                                                              child: Container(
+                                                                  child: Column(
+                                                                      children: [
+                                                                    Align(
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .center,
+                                                                        child:
+                                                                            Text(
+                                                                          "FINE TURNO:",
+                                                                          style:
+                                                                              TextStyle(
+                                                                            color:
+                                                                                Colors.black,
+                                                                            fontSize:
+                                                                                16,
+                                                                            fontFamily:
+                                                                                "Montserrat",
+                                                                            fontWeight:
+                                                                                FontWeight.w700,
+                                                                          ),
+                                                                          textAlign:
+                                                                              TextAlign.left,
+                                                                        ))
+                                                                  ]))),
+                                                          Flexible(
+                                                              flex: 50,
+                                                              child: Container(
+                                                                  child: Column(
+                                                                      children: [
+                                                                    Align(
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .centerLeft,
+                                                                        child:
+                                                                            Text(
+                                                                          shiftOfTheDayResponse != null
+                                                                              ? shiftOfTheDayResponse!.data!.timeEnd!.split(" ")[1].substring(0, 5)
+                                                                              : "",
+                                                                          style:
+                                                                              TextStyle(
+                                                                            color:
+                                                                                Colors.black,
+                                                                            fontSize:
+                                                                                16,
+                                                                            fontFamily:
+                                                                                "Montserrat",
+                                                                            fontWeight:
+                                                                                FontWeight.w500,
+                                                                          ),
+                                                                          textAlign:
+                                                                              TextAlign.left,
+                                                                        ))
+                                                                  ])))
+                                                        ])
+                                                      ]),
+                                                ),
+                                              ),
+                                            ]))
                                   ],
-                                ))
-                          ])
-                        : Column(),
-                    SizedBox(height: 20),
-                    shiftOfTheDayResponse != null
-                        ? Column(
-                            children: <Widget>[
-                              Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 20),
+                                )
+                              : Column(
+                                  children: [
+                                    Text(
+                                      "Nessun turno caricato",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                        fontFamily: "Montserrat",
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                          SizedBox(height: 30),
+                          shiftOfTheDayResponse != null
+                              ? Column(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => setState(() {
+                                        if (!isEndedAttendance) {
+                                          isStartedAttendance =
+                                              !isStartedAttendance;
+                                          editShift();
+                                        }
+                                        // sendPosition();
+                                      }),
+                                      child: Container(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.5,
+                                        child: Column(children: <Widget>[
+                                          Container(
+                                            width: 82,
+                                            height: 77,
+                                            child: Stack(
+                                              children: [
+                                                Container(
+                                                  width: 82,
+                                                  height: 77,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color:
+                                                            Color(0x3f000000),
+                                                        blurRadius: 4,
+                                                        offset: Offset(0, 4),
+                                                      ),
+                                                    ],
+                                                    color: !isStartedAttendance &&
+                                                            !isEndedAttendance
+                                                        ? Color(0xff44b930)
+                                                        : (isStartedAttendance &&
+                                                                !isEndedAttendance
+                                                            ? Colors.red
+                                                            : Colors.grey),
+                                                  ),
+                                                ),
+                                                Positioned.fill(
+                                                  child: Align(
+                                                    alignment: Alignment.center,
+                                                    child: SizedBox(
+                                                      width: 80,
+                                                      height: 18,
+                                                      child: Text(
+                                                        !isStartedAttendance
+                                                            ? "INIZIO"
+                                                            : "FINE",
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 16,
+                                                          fontFamily:
+                                                              "Montserrat",
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        ]),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Container(
+                                  height: 100,
+                                ),
+                          shiftOfTheDayResponse?.data?.employeeTimeStart != null
+                              ? _createDataTable()
+                              : SizedBox(),
+                        ]),
+
+                        Align(
+                            alignment: FractionalOffset.bottomCenter,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 20, horizontal: 0),
+                              child: InkWell(
+                                  onTap: () {
+                                    Navigator.of(context)
+                                        .pushNamed('/stateOfVehicle');
+                                  },
                                   child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: [
-                                        Flexible(
-                                          flex: 50,
-                                          child: Container(
-                                            width: MediaQuery.of(context)
-                                                .size
-                                                .width,
-                                            child: Column(children: <Widget>[
-                                              Row(children: [
-                                                Flexible(
-                                                    flex: 50,
-                                                    child: Container(
-                                                        child:
-                                                            Column(children: [
-                                                      Align(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(
-                                                            "INIZIO TURNO:",
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.black,
-                                                              fontSize: 16,
-                                                              fontFamily:
-                                                                  "Montserrat",
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                            ),
-                                                            textAlign:
-                                                                TextAlign.left,
-                                                          ))
-                                                    ]))),
-                                                Flexible(
-                                                    flex: 50,
-                                                    child: Container(
-                                                        child:
-                                                            Column(children: [
-                                                      Align(
-                                                          alignment: Alignment
-                                                              .centerLeft,
-                                                          child: Text(
-                                                            shiftOfTheDayResponse !=
-                                                                    null
-                                                                ? shiftOfTheDayResponse!
-                                                                    .data!
-                                                                    .timeStart!
-                                                                    .split(
-                                                                        " ")[1]
-                                                                    .substring(
-                                                                        0, 5)
-                                                                : "",
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.black,
-                                                              fontSize: 16,
-                                                              fontFamily:
-                                                                  "Montserrat",
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500,
-                                                            ),
-                                                            textAlign:
-                                                                TextAlign.left,
-                                                          ))
-                                                    ])))
-                                              ]),
-                                              Row(children: [
-                                                Flexible(
-                                                    flex: 50,
-                                                    child: Container(
-                                                        child:
-                                                            Column(children: [
-                                                      Align(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(
-                                                            "FINE TURNO:",
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.black,
-                                                              fontSize: 16,
-                                                              fontFamily:
-                                                                  "Montserrat",
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                            ),
-                                                            textAlign:
-                                                                TextAlign.left,
-                                                          ))
-                                                    ]))),
-                                                Flexible(
-                                                    flex: 50,
-                                                    child: Container(
-                                                        child:
-                                                            Column(children: [
-                                                      Align(
-                                                          alignment: Alignment
-                                                              .centerLeft,
-                                                          child: Text(
-                                                            shiftOfTheDayResponse !=
-                                                                    null
-                                                                ? shiftOfTheDayResponse!
-                                                                    .data!
-                                                                    .timeEnd!
-                                                                    .split(
-                                                                        " ")[1]
-                                                                    .substring(
-                                                                        0, 5)
-                                                                : "",
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.black,
-                                                              fontSize: 16,
-                                                              fontFamily:
-                                                                  "Montserrat",
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500,
-                                                            ),
-                                                            textAlign:
-                                                                TextAlign.left,
-                                                          ))
-                                                    ])))
-                                              ])
-                                            ]),
-                                          ),
+                                    children: [
+                                      Container(
+                                        width:
+                                            MediaQuery.of(context).size.width -
+                                                20,
+                                        height: 52,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x3ff4af49),
+                                              blurRadius: 4,
+                                              offset: Offset(0, 3),
+                                            ),
+                                          ],
+                                          color: Colors.amber,
                                         ),
-                                      ]))
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              Text(
+                                        margin: const EdgeInsets.only(
+                                            left: 10.0,
+                                            right: 10.0,
+                                            bottom: 0.0,
+                                            top: 0),
+                                        padding: const EdgeInsets.only(
+                                          left: 25,
+                                          right: 29,
+                                          top: 12,
+                                          bottom: 21,
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            // Container(
+                                            //   width: 96,
+                                            //   height: 96,
+                                            //   child:
+                                            //       Image.asset('assets/crashedCar.png'),
+                                            // ),
+                                            Text(
+                                              "Stato del veicolo",
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 14,
+                                                fontFamily: "Montserrat",
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )),
+                            )),
+                        Expanded(
+                            child: Align(
+                                alignment: FractionalOffset.bottomCenter,
+                                child: Container(
+                                  height:
+                                      MediaQuery.of(context).size.height / 1.5,
+                                  decoration: new BoxDecoration(
+                                    color: Color(0x4d7BCEFD),
+                                    // borderRadius: new BorderRadius.only(
+                                    //   topLeft: const Radius.circular(40.0),
+                                    //   topRight: const Radius.circular(40.0),
+                                    // )
+                                  ),
+                                  margin: const EdgeInsets.only(
+                                      left: 0.0,
+                                      right: 0.0,
+                                      bottom: 0.0,
+                                      top: 0),
+                                  child: Expanded(
+                                    child: Align(
+                                      child: GridView.count(
+                                          physics:
+                                              NeverScrollableScrollPhysics(),
+                                          crossAxisCount: 2,
+                                          padding: const EdgeInsets.all(6.0),
+                                          childAspectRatio: 20.0 / 15.0,
+                                          children: [
+                                            InkWell(
+                                                onTap: () {
+                                                  Navigator.of(context)
+                                                      .pushNamed('/accident');
+                                                },
+                                                child: Container(
+                                                  width: 150,
+                                                  height: 150,
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Container(
+                                                        width: 150,
+                                                        height: 150,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(15),
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: Color(
+                                                                  0x3ff4af49),
+                                                              blurRadius: 4,
+                                                              offset:
+                                                                  Offset(0, 3),
+                                                            ),
+                                                          ],
+                                                          color: Colors.white,
+                                                        ),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                          left: 25,
+                                                          right: 29,
+                                                          top: 11,
+                                                          bottom: 21,
+                                                        ),
+                                                        child: Column(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .end,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Container(
+                                                              width: 96,
+                                                              height: 91,
+                                                              child: Image.asset(
+                                                                  'assets/crashedCar.png'),
+                                                            ),
+                                                            Text(
+                                                              "Sinistro",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .black,
+                                                                fontSize: 14,
+                                                                fontFamily:
+                                                                    "Montserrat",
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )),
+                                            InkWell(
+                                              onTap: () {
+                                                Navigator.of(context)
+                                                    .pushNamed('/broken-down');
+                                              },
+                                              child: Container(
+                                                width: 150,
+                                                height: 150,
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    Container(
+                                                      width: 150,
+                                                      height: 150,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(15),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: Color(
+                                                                0x3ff4af49),
+                                                            blurRadius: 4,
+                                                            offset:
+                                                                Offset(0, 3),
+                                                          ),
+                                                        ],
+                                                        color: Colors.white,
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                        left: 24,
+                                                        right: 30,
+                                                        top: 11,
+                                                        bottom: 21,
+                                                      ),
+                                                      child: Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .end,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Container(
+                                                            width: 96,
+                                                            height: 91,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8),
+                                                            ),
+                                                            child: Image.asset(
+                                                                'assets/damage.png'),
+                                                          ),
+                                                          SizedBox(
+                                                            width: 71,
+                                                            child: Text(
+                                                              "Guasto",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .black,
+                                                                fontSize: 14,
+                                                                fontFamily:
+                                                                    "Montserrat",
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ]),
+                                    ),
+                                  ),
+                                )))
+
+                        //non qua
+                      ])
+                    : Column(
+                        children: [
+                          SizedBox(height: 100),
+                          Align(
+                              alignment: Alignment.center,
+                              child: Text(
                                 "Nessun turno caricato",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -627,337 +1099,13 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   fontFamily: "Montserrat",
                                   fontWeight: FontWeight.w700,
                                 ),
-                              )
-                            ],
-                          ),
-                    SizedBox(height: 30),
-                    shiftOfTheDayResponse != null
-                        ? Column(
-                            children: [
-                              GestureDetector(
-                                onTap: () => setState(() {
-                                  if (!isEndedAttendance) {
-                                    isStartedAttendance = !isStartedAttendance;
-                                    editShift();
-                                  }
-                                  // sendPosition();
-                                }),
-                                child: Container(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.5,
-                                  child: Column(children: <Widget>[
-                                    Container(
-                                      width: 82,
-                                      height: 77,
-                                      child: Stack(
-                                        children: [
-                                          Container(
-                                            width: 82,
-                                            height: 77,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Color(0x3f000000),
-                                                  blurRadius: 4,
-                                                  offset: Offset(0, 4),
-                                                ),
-                                              ],
-                                              color: !isStartedAttendance &&
-                                                      !isEndedAttendance
-                                                  ? Color(0xff44b930)
-                                                  : (isStartedAttendance &&
-                                                          !isEndedAttendance
-                                                      ? Colors.red
-                                                      : Colors.grey),
-                                            ),
-                                          ),
-                                          Positioned.fill(
-                                            child: Align(
-                                              alignment: Alignment.center,
-                                              child: SizedBox(
-                                                width: 80,
-                                                height: 18,
-                                                child: Text(
-                                                  !isStartedAttendance
-                                                      ? "INIZIO"
-                                                      : "FINE",
-                                                  textAlign: TextAlign.center,
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 16,
-                                                    fontFamily: "Montserrat",
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ]),
-                                ),
-                              ),
-                            ],
-                          )
-                        : Container(
-                            height: 100,
-                          ),
-                    shiftOfTheDayResponse?.data?.employeeTimeStart != null
-                        ? _createDataTable()
-                        : SizedBox(),
-                  ]),
-
-                  Align(
-                      alignment: FractionalOffset.bottomCenter,
-                      child: Padding(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 20, horizontal: 0),
-                        child: InkWell(
-                            onTap: () {
-                              Navigator.of(context)
-                                  .pushNamed('/stateOfVehicle');
-                            },
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: MediaQuery.of(context).size.width - 20,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(15),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x3ff4af49),
-                                        blurRadius: 4,
-                                        offset: Offset(0, 3),
-                                      ),
-                                    ],
-                                    color: Colors.amber,
-                                  ),
-                                  margin: const EdgeInsets.only(
-                                      left: 10.0,
-                                      right: 10.0,
-                                      bottom: 0.0,
-                                      top: 0),
-                                  padding: const EdgeInsets.only(
-                                    left: 25,
-                                    right: 29,
-                                    top: 11,
-                                    bottom: 21,
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      // Container(
-                                      //   width: 96,
-                                      //   height: 96,
-                                      //   child:
-                                      //       Image.asset('assets/crashedCar.png'),
-                                      // ),
-                                      Text(
-                                        "Stato del veicolo",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                          fontFamily: "Montserrat",
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            )),
-                      )),
-                  Expanded(
-                      child: Align(
-                          alignment: FractionalOffset.bottomCenter,
-                          child: Container(
-                            height: MediaQuery.of(context).size.height / 3,
-                            decoration: new BoxDecoration(
-                              color: Color(0x4d7BCEFD),
-                              // borderRadius: new BorderRadius.only(
-                              //   topLeft: const Radius.circular(40.0),
-                              //   topRight: const Radius.circular(40.0),
-                              // )
-                            ),
-                            margin: const EdgeInsets.only(
-                                left: 0.0, right: 0.0, bottom: 0.0, top: 0),
-                            child: Expanded(
-                              child: Align(
-                                child: GridView.count(
-                                    physics: NeverScrollableScrollPhysics(),
-                                    crossAxisCount: 2,
-                                    padding: const EdgeInsets.all(8.0),
-                                    childAspectRatio: 8.0 / 9.0,
-                                    children: [
-                                      InkWell(
-                                          onTap: () {
-                                            Navigator.of(context)
-                                                .pushNamed('/accident');
-                                          },
-                                          child: Container(
-                                            width: 150,
-                                            height: 150,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                Container(
-                                                  width: 150,
-                                                  height: 150,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            15),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color:
-                                                            Color(0x3ff4af49),
-                                                        blurRadius: 4,
-                                                        offset: Offset(0, 3),
-                                                      ),
-                                                    ],
-                                                    color: Colors.white,
-                                                  ),
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                    left: 25,
-                                                    right: 29,
-                                                    top: 11,
-                                                    bottom: 21,
-                                                  ),
-                                                  child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Container(
-                                                        width: 96,
-                                                        height: 96,
-                                                        child: Image.asset(
-                                                            'assets/crashedCar.png'),
-                                                      ),
-                                                      Text(
-                                                        "Sinistro",
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: Colors.black,
-                                                          fontSize: 14,
-                                                          fontFamily:
-                                                              "Montserrat",
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          )),
-                                      InkWell(
-                                        onTap: () {
-                                          Navigator.of(context)
-                                              .pushNamed('/accident');
-                                        },
-                                        child: Container(
-                                          width: 150,
-                                          height: 150,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Container(
-                                                width: 150,
-                                                height: 150,
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(15),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Color(0x3ff4af49),
-                                                      blurRadius: 4,
-                                                      offset: Offset(0, 3),
-                                                    ),
-                                                  ],
-                                                  color: Colors.white,
-                                                ),
-                                                padding: const EdgeInsets.only(
-                                                  left: 24,
-                                                  right: 30,
-                                                  top: 11,
-                                                  bottom: 21,
-                                                ),
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.end,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    Container(
-                                                      width: 96,
-                                                      height: 96,
-                                                      decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                      ),
-                                                      child: Image.asset(
-                                                          'assets/damage.png'),
-                                                    ),
-                                                    SizedBox(
-                                                      width: 71,
-                                                      child: Text(
-                                                        "Guasto",
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: Colors.black,
-                                                          fontSize: 14,
-                                                          fontFamily:
-                                                              "Montserrat",
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ]),
-                              ),
-                            ),
-                          )))
-
-                  //non qua
-                ]));
+                              ))
+                        ],
+                      ));
           } else {
             return Center(
                 child: CircularProgressIndicator(
-              color: Colors.white,
+              color: Color(0xff569CDD),
             ));
           }
         });

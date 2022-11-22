@@ -7,6 +7,7 @@ import 'package:ls_rent/components/info_card.dart';
 import 'package:http/http.dart' as http;
 import 'package:ls_rent/services/response/profile_response.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/constants.dart';
 
 import '../services/shared.dart';
 
@@ -43,10 +44,10 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
     print(authToken);
     try {
       var response = await http.get(
-          Uri.parse("https://api.lsrent.ml/api/v1/employees/${id}"),
+          Uri.parse(baseUrl + "/api/v1/employees/${id}"),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': "Bearer " + authToken!
+            'Authorization': "Bearer " + (authToken ?? "")
           }).timeout((const Duration(seconds: 10)));
 
       log(response.body);
