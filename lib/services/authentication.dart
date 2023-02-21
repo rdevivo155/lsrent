@@ -1,7 +1,5 @@
-import 'package:dio/dio.dart';
 
 class ApiClient {
-  final Dio _dio = Dio();
 
   // Future<Response> registerUser() async {
   //   //IMPLEMENT USER REGISTRATION

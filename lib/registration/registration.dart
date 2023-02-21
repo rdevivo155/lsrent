@@ -15,6 +15,8 @@ import '../constants/constants.dart';
 final emailFormKey = GlobalKey<FormState>(debugLabel: "username");
 final passwordFormKey = GlobalKey<FormState>(debugLabel: "password");
 final fiscalCodeFormKey = GlobalKey<FormState>(debugLabel: "fiscalCode");
+final confirmPasswordFormKey =
+    GlobalKey<FormState>(debugLabel: "ConfirmPassword");
 
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
@@ -26,30 +28,41 @@ class MyStatefulWidget extends StatefulWidget {
 class Registration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Registrati'),
-        ),
-        body: MyStatefulWidget(),
-        backgroundColor: Color(0xff569CDD));
+    return GestureDetector(
+        onTap: () {
+          FocusScopeNode currentFocus = FocusScope.of(context);
+
+          if (!currentFocus.hasPrimaryFocus) {
+            currentFocus.unfocus();
+          }
+        },
+        child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Registrati'),
+            ),
+            body: MyStatefulWidget(),
+            backgroundColor: Color(0xff569CDD)));
   }
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  TextEditingController confirmPasswordController = TextEditingController();
   TextEditingController fiscalCodeController = TextEditingController();
 
   TextStyle? labelStyle;
   bool loading = false;
   bool error = false;
   bool _obscureText = true;
+  bool _obscureCopyPassText = true;
 
   @override
   void initState() {
     super.initState();
     nameController.text = "";
     passwordController.text = "";
+    confirmPasswordController.text = "";
     fiscalCodeController.text = "";
   }
 
@@ -59,12 +72,26 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     });
   }
 
+  void _toggleCopyPass() {
+    setState(() {
+      _obscureCopyPassText = !_obscureCopyPassText;
+    });
+  }
+
   validateFields() {
     final e = emailFormKey.currentState?.validate();
     final p = passwordFormKey.currentState?.validate();
+    final cp = confirmPasswordFormKey.currentState?.validate();
     final f = fiscalCodeFormKey.currentState?.validate();
 
-    if (p == true && e == true && f == true) {
+    if (p == true &&
+        cp == true &&
+        e == true &&
+        f == true &&
+        nameController.text != "" &&
+        passwordController.text != "" &&
+        confirmPasswordController.text != "" &&
+        fiscalCodeController.text != "") {
       return true;
     }
     return false;
@@ -85,8 +112,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     RegistrationRequest request =
         RegistrationRequest(username, password, taxCode, 1);
     if (isOnline) {
-      final response = await http.post(
-          Uri.parse(baseUrl + "/api/v1/register"),
+      final response = await http.post(Uri.parse(baseUrl + "/api/v1/register"),
           headers: <String, String>{
             'Content-Type': 'application/x-www-form-urlencoded'
           },
@@ -169,37 +195,41 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       alignment: Alignment.center,
                       padding: const EdgeInsets.all(10),
                       child: Padding(
-                          padding: EdgeInsets.fromLTRB(20, 70, 20, 20),
-                          child: Image.asset('assets/logo.png'))),
+                          padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                          child: Image.asset(
+                            'assets/logo1.png',
+                            width: 120,
+                            height: 60,
+                          ))),
                   Container(
-                    padding: const EdgeInsets.fromLTRB(20, 100, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                     child: Form(
                       key: emailFormKey,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       child: TextFormField(
                         controller: nameController,
                         cursorColor: Colors.white,
-                        validator: (value) {
-                          if (value?.length == 8) {
-                            Future.delayed(Duration.zero, () async {
-                              setState(() {
-                                error = true;
-                              });
-                            });
+                        // validator: (value) {
+                        //   if (value?.length == 8) {
+                        //     Future.delayed(Duration.zero, () async {
+                        //       setState(() {
+                        //         error = true;
+                        //       });
+                        //     });
 
-                            return "Inserire una password min 8 caratteri";
-                          }
-                          if (value == null || value.isEmpty) {
-                            Future.delayed(Duration.zero, () async {
-                              setState(() {
-                                error = true;
-                              });
-                            });
+                        //     return "Inserire una password min 8 caratteri";
+                        //   }
+                        //   if (value == null || value.isEmpty) {
+                        //     Future.delayed(Duration.zero, () async {
+                        //       setState(() {
+                        //         error = true;
+                        //       });
+                        //     });
 
-                            return emailError;
-                          }
-                          return null;
-                        },
+                        //     return emailError;
+                        //   }
+                        //   return null;
+                        // },
                         autocorrect: false,
                         enableSuggestions: false,
                         autofocus: false,
@@ -236,18 +266,18 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         cursorColor: Colors.white,
                         controller: passwordController,
                         style: TextStyle(color: Colors.white),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            Future.delayed(Duration.zero, () async {
-                              setState(() {
-                                error = true;
-                              });
-                            });
+                        // validator: (value) {
+                        //   if (value == null || value.isEmpty) {
+                        //     Future.delayed(Duration.zero, () async {
+                        //       setState(() {
+                        //         error = true;
+                        //       });
+                        //     });
 
-                            return passwordError;
-                          }
-                          return null;
-                        },
+                        //     return passwordError;
+                        //   }
+                        //   return null;
+                        // },
                         autofocus: false,
                         autocorrect: false,
                         textCapitalization: TextCapitalization.sentences,
@@ -285,24 +315,79 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                     child: Form(
                       autovalidateMode: AutovalidateMode.onUserInteraction,
+                      key: confirmPasswordFormKey,
+                      child: TextFormField(
+                        obscureText: _obscureCopyPassText ? true : false,
+                        cursorColor: Colors.white,
+                        controller: confirmPasswordController,
+                        style: TextStyle(color: Colors.white),
+                        // validator: (value) {
+                        //   if (value == null || value.isEmpty) {
+                        //     Future.delayed(Duration.zero, () async {
+                        //       setState(() {
+                        //         error = true;
+                        //       });
+                        //     });
+
+                        //     return passwordError;
+                        //   }
+                        //   return null;
+                        // },
+                        autofocus: false,
+                        autocorrect: false,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: InputDecoration(
+                          focusedBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          focusColor: Colors.white,
+                          prefixIcon: Icon(Icons.lock, color: Colors.white),
+                          suffixIcon: InkWell(
+                            onTap: _toggleCopyPass,
+                            child: Icon(
+                              _obscureCopyPassText
+                                  ? Icons.remove_red_eye_outlined
+                                  : Icons.remove_red_eye_sharp,
+                              size: 18.0,
+                              color: Colors.white,
+                            ),
+                          ),
+                          enabledBorder: const UnderlineInputBorder(
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 1.0),
+                          ),
+                          labelText: 'Conferma password',
+                          labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 18,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                    child: Form(
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       key: fiscalCodeFormKey,
                       child: TextFormField(
                         obscureText: false,
                         cursorColor: Colors.white,
                         controller: fiscalCodeController,
                         style: TextStyle(color: Colors.white),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            Future.delayed(Duration.zero, () async {
-                              setState(() {
-                                error = true;
-                              });
-                            });
+                        // validator: (value) {
+                        //   if (value == null || value.isEmpty) {
+                        //     Future.delayed(Duration.zero, () async {
+                        //       setState(() {
+                        //         error = true;
+                        //       });
+                        //     });
 
-                            return taxCodeError;
-                          }
-                          return null;
-                        },
+                        //     return taxCodeError;
+                        //   }
+                        //   return null;
+                        // },
                         autofocus: false,
                         autocorrect: false,
                         textCapitalization: TextCapitalization.characters,
@@ -337,7 +422,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
-                            primary: validateFields()
+                            backgroundColor: validateFields()
                                 ? Color(0xfff4af49)
                                 : Colors.blueGrey),
                         onPressed: (loading)
@@ -345,22 +430,17 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                             : () async {
                                 print(nameController.text);
                                 print(passwordController.text);
-                                loading = true;
                                 // network.
                                 if (validateFields()) {
-                                  var registrationResponse = await registration(
-                                      context,
-                                      nameController.text,
-                                      passwordController.text,
-                                      fiscalCodeController.text);
-                                  if (registrationResponse != null) {
+                                  if (passwordController.text !=
+                                      confirmPasswordController.text) {
                                     showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
                                           return AlertDialog(
                                             title: Text("Attenzione"),
                                             content: Text(
-                                                "La registrazione è stata effettuate con successo!"),
+                                                "Le password non coincidono"),
                                             actions: [
                                               ElevatedButton(
                                                 child: Text("Ok"),
@@ -372,23 +452,51 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                           );
                                         });
                                   } else {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text("Attenzione"),
-                                            content: Text(
-                                                "I dati inseriti sono errati!"),
-                                            actions: [
-                                              ElevatedButton(
-                                                child: Text("Ok"),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              )
-                                            ],
-                                          );
-                                        });
+                                    loading = true;
+
+                                    var registrationResponse =
+                                        await registration(
+                                            context,
+                                            nameController.text,
+                                            passwordController.text,
+                                            fiscalCodeController.text);
+                                    if (registrationResponse != null) {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: Text("Attenzione"),
+                                              content: Text(
+                                                  "La registrazione è stata effettuate con successo!"),
+                                              actions: [
+                                                ElevatedButton(
+                                                  child: Text("Ok"),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                )
+                                              ],
+                                            );
+                                          });
+                                    } else {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: Text("Attenzione"),
+                                              content: Text(
+                                                  "I dati inseriti sono errati!"),
+                                              actions: [
+                                                ElevatedButton(
+                                                  child: Text("Ok"),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                )
+                                              ],
+                                            );
+                                          });
+                                    }
                                   }
                                 }
                               },

@@ -1,15 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:ls_rent/model/response/shifts_response.dart';
-import 'package:month_picker_dialog/month_picker_dialog.dart';
+//import 'package:month_picker_dialog/month_picker_dialog.dart';
+import 'package:mat_month_picker_dialog/mat_month_picker_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:ls_rent/components/info_card.dart';
 import 'package:http/http.dart' as http;
-import 'package:ls_rent/services/response/profile_response.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/constants.dart';
 import '../services/shared.dart';
@@ -91,12 +87,11 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                   FloatingActionButton(
                     onPressed: () {
                       showMonthPicker(
-                        context: context,
-                        firstDate: DateTime(DateTime.now().year - 1, 5),
-                        lastDate: DateTime(DateTime.now().year + 1, 9),
-                        initialDate: selectedDate ?? DateTime.now(),
-                        locale: Locale("it"),
-                      ).then((date) async {
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(1970),
+                              lastDate: DateTime(2050))
+                          .then((date) async {
                         setState(() {
                           loading = true;
                         });
@@ -108,6 +103,24 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                           });
                         }
                       });
+                      // showMonthPicker(
+                      //   context: context,
+                      //   firstDate: DateTime(DateTime.now().year - 1, 5),
+                      //   lastDate: DateTime(DateTime.now().year + 1, 9),
+                      //   initialDate: selectedDate ?? DateTime.now(),
+                      //   locale: Locale("it"),
+                      // ).then((date) async {
+                      //   setState(() {
+                      //     loading = true;
+                      //   });
+                      //   var calendar = await downloadData();
+                      //   if (date != null) {
+                      //     setState(() {
+                      //       loading = false;
+                      //       selectedDate = date;
+                      //     });
+                      //   }
+                      // });
                     },
                     child: Icon(Icons.calendar_today),
                   ),

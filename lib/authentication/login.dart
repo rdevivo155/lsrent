@@ -22,8 +22,16 @@ class MyStatefulWidget extends StatefulWidget {
 class Login extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: MyStatefulWidget(), backgroundColor: Color(0xff569CDD));
+    return GestureDetector(
+        onTap: () {
+          FocusScopeNode currentFocus = FocusScope.of(context);
+
+          if (!currentFocus.hasPrimaryFocus) {
+            currentFocus.unfocus();
+          }
+        },
+        child: Scaffold(
+            body: MyStatefulWidget(), backgroundColor: Color(0xff569CDD)));
   }
 }
 
@@ -52,9 +60,12 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   validateFields() {
-    var e = emailFormKey.currentState?.validate();
-    var p = passwordFormKey.currentState?.validate();
-    if (p == true && e == true) {
+    // var e = emailFormKey.currentState?.validate();
+    // var p = passwordFormKey.currentState?.validate();
+    // if (p == true && e == true) {
+    //   return true;
+    // }
+    if (nameController.text != "" && passwordController.text != "") {
       return true;
     }
     return false;
@@ -170,9 +181,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       child: Padding(
                           padding: EdgeInsets.fromLTRB(20, 40, 20, 20),
                           child: Image.asset(
-                            'assets/logoApp.png',
-                            width: 120,
-                            height: 120,
+                            'assets/logo1.png',
+                            width: 150,
+                            height: 100,
                           ))),
                   Container(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
@@ -182,25 +193,24 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       child: TextFormField(
                         controller: nameController,
                         cursorColor: Colors.white,
-                        validator: (value) {
-                          String pattern =
-                              r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-                          RegExp regex = RegExp(pattern);
+                        // validator: (value) {
+                        //   String pattern =
+                        //       r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+                        //   RegExp regex = RegExp(pattern);
 
-                          if (value == null ||
-                              value.isEmpty ||
-                              !regex.hasMatch(value)) {
-                            Future.delayed(Duration(milliseconds: 4000),
-                                () async {
-                              setState(() {
-                                errorEmail = true;
-                              });
-                            });
+                        //   if (value != null &&
+                        //       !regex.hasMatch(value)) {
+                        //     Future.delayed(Duration(milliseconds: 4000),
+                        //         () async {
+                        //       setState(() {
+                        //         errorEmail = true;
+                        //       });
+                        //     });
 
-                            return emailError;
-                          }
-                          return null;
-                        },
+                        //     return emailError;
+                        //   }
+                        //   return null;
+                        // },
                         autocorrect: false,
                         enableSuggestions: false,
                         autofocus: false,
@@ -237,18 +247,18 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         cursorColor: Colors.white,
                         controller: passwordController,
                         style: TextStyle(color: Colors.white),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            Future.delayed(Duration.zero, () async {
-                              setState(() {
-                                errorPassword = true;
-                              });
-                            });
+                        // validator: (value) {
+                        //   if (value == null || value.isEmpty) {
+                        //     Future.delayed(Duration.zero, () async {
+                        //       setState(() {
+                        //         errorPassword = true;
+                        //       });
+                        //     });
 
-                            return passwordError;
-                          }
-                          return null;
-                        },
+                        //     return passwordError;
+                        //   }
+                        //   return null;
+                        // },
                         autofocus: false,
                         autocorrect: false,
                         textCapitalization: TextCapitalization.sentences,
@@ -292,7 +302,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
-                          primary: validateFields() && !loading
+                          backgroundColor: validateFields() && !loading
                               ? Color(0xfff4af49)
                               : Colors.blueGrey,
                           splashFactory:
