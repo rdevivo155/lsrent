@@ -587,7 +587,23 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                               onTap: () => setState(() {
                                 if (!isEndedAttendance) {
                                   isStartedAttendance = !isStartedAttendance;
-                                  editShift();
+                                  showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text("Attenzione"),
+                                          content:
+                                              Text("Sicuro di voler timbrare?"),
+                                          actions: [
+                                            ElevatedButton(
+                                              child: Text("Ok"),
+                                              onPressed: () {
+                                                editShift();
+                                              },
+                                            )
+                                          ],
+                                        );
+                                      });
                                 }
                                 // sendPosition();
                               }),

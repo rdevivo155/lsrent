@@ -58,6 +58,8 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
           });
       if (response.statusCode == 200) {
         shiftsResponse = ShiftsResponse.fromJson(jsonDecode(response.body));
+        shiftsResponse!.data!.dataModels!
+            .sort((a, b) => a.timeStart!.compareTo(b.timeStart!));
       } else if (response.statusCode == 401 || response.statusCode >= 500) {}
 
       return response;
@@ -205,36 +207,41 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                                                                           index]
                                                                       .employeeTimeStart !=
                                                                   null
-                                                              ? (DateFormat(
-                                                                      "dd/MM/yyyy HH:mm")
-                                                                  .format(DateTime.parse(shiftsResponse
+                                                              ? (DateFormat("dd/MM/yyyy HH:mm").format(DateTime.parse(
+                                                                  shiftsResponse
                                                                           ?.data
                                                                           ?.dataModels?[
                                                                               index]
                                                                           .employeeTimeStart ??
                                                                       "")))
-                                                              : "")),
+                                                              : (DateFormat(
+                                                                      "dd/MM/yyyy HH:mm")
+                                                                  .format(DateTime.parse(shiftsResponse?.data?.dataModels?[index].timeStart ?? ""))))),
                                                           DataCell(Text(shiftsResponse
                                                                       ?.data
                                                                       ?.dataModels?[
                                                                           index]
                                                                       .employeeTimeEnd !=
                                                                   null
-                                                              ? (DateFormat(
-                                                                      "dd/MM/yyyy HH:mm")
-                                                                  .format(DateTime.parse(shiftsResponse
-                                                                          ?.data
-                                                                          ?.dataModels?[
-                                                                              index]
-                                                                          .employeeTimeEnd ??
-                                                                      "")))
-                                                              : "")),
+                                                              ? (DateFormat("dd/MM/yyyy HH:mm").format(DateTime.parse(shiftsResponse
+                                                                      ?.data
+                                                                      ?.dataModels?[
+                                                                          index]
+                                                                      .employeeTimeEnd ??
+                                                                  shiftsResponse
+                                                                      ?.data
+                                                                      ?.dataModels?[
+                                                                          index]
+                                                                      .timeEnd ??
+                                                                  "")))
+                                                              : (DateFormat("dd/MM/yyyy HH:mm")
+                                                                  .format(DateTime.parse(shiftsResponse?.data?.dataModels?[index].timeEnd ?? ""))))),
                                                           DataCell(shiftsResponse
                                                                       ?.data
                                                                       ?.dataModels?[
                                                                           index]
                                                                       .type !=
-                                                                  1
+                                                                  0
                                                               ? Container(
                                                                   width: 20,
                                                                   height: 20,

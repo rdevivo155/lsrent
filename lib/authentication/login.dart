@@ -60,11 +60,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   validateFields() {
-    // var e = emailFormKey.currentState?.validate();
-    // var p = passwordFormKey.currentState?.validate();
-    // if (p == true && e == true) {
-    //   return true;
-    // }
     if (nameController.text != "" && passwordController.text != "") {
       return true;
     }
@@ -302,7 +297,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: validateFields() && !loading
+                          backgroundColor: validateFields()
                               ? Color(0xfff4af49)
                               : Colors.blueGrey,
                           splashFactory:
