@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "688608370648",
+    "project_id": "lsrent-82245",
+    "storage_bucket": "lsrent-82245.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:688608370648:android:e41530bf99021cca3bdcad",
+        "android_client_info": {
+          "package_name": "it.lsrent.it"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "688608370648-hns1gif0cfh9oi1tp7i6obif2p00f1gk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTrr9xr206nf041Hig3YsH4_hM6SGKiwo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "688608370648-hns1gif0cfh9oi1tp7i6obif2p00f1gk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "688608370648-h48p1l7kdtodbq2tu5tf50g4tdqvgu3n.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lsRent"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

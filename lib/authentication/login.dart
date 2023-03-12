@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:ls_rent/constants/api.dart';
+import 'package:ls_rent/constants/globals.dart';
 import 'package:ls_rent/model/response/login_response.dart';
 import 'package:ls_rent/services/shared.dart';
 import 'package:ls_rent/services/network.dart' as network;
 import '../constants/constants.dart';
+import '../model/response/push_response.dart';
 
 final emailFormKey = GlobalKey<FormState>(debugLabel: "username");
 final passwordFormKey = GlobalKey<FormState>(debugLabel: "password");
@@ -75,6 +77,66 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     }
   }
 
+  Future<PushResponse?> checkToken(accessToken) async {
+    final responsePush = await http.get(
+      Uri.parse(baseUrl + "/api/v1/push/me"),
+      headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': "Bearer ${accessToken}"
+      },
+    );
+
+    print(responsePush.body);
+    if (responsePush.statusCode == 200) {
+      PushResponse response =
+          PushResponse.fromJson(jsonDecode(responsePush.body));
+      return response;
+    }
+    return null;
+  }
+
+  Future<PushResponse?> createToken(accessToken, id) async {
+    final responsePush = await http
+        .post(Uri.parse(baseUrl + "/api/v1/push"), headers: <String, String>{
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': "Bearer ${accessToken}"
+    }, body: {
+      'id_user': id.toString(),
+      'token': token
+    });
+
+    print(responsePush.body);
+
+    if (responsePush.statusCode == 201) {
+      setState(() {
+        loading = false;
+      });
+      Navigator.of(context).popAndPushNamed('/home');
+    }
+  }
+
+  Future<PushResponse?> updateToken(accessToken, id, pushID) async {
+    final responsePush = await http.put(
+        Uri.parse(baseUrl + "/api/v1/push/${pushID}"),
+        headers: <String, String>{
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': "Bearer ${accessToken}"
+        },
+        body: {
+          'id_user': id.toString(),
+          'token': token
+        });
+
+    print(responsePush.body);
+
+    if (responsePush.statusCode == 202) {
+      setState(() {
+        loading = false;
+      });
+      Navigator.of(context).popAndPushNamed('/home');
+    }
+  }
+
   Future<LoginResponse?> loginAuth(
       BuildContext context, String username, String password) async {
     bool isOnline = await hasNetwork();
@@ -84,8 +146,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             'Content-Type': 'application/x-www-form-urlencoded'
           },
           body: {
-            'username': username,
-            'password': password
+            'username': username.trim(),
+            'password': password.trim()
           });
 
       print(response.body);
@@ -95,12 +157,21 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             LoginResponse.fromJson(jsonDecode(response.body));
         print(loginResponse.toJson());
         setBasicAuth(loginResponse.data?.accessToken ?? "");
+        setEmployee(loginResponse.data?.employeeId.toString() ?? "");
         setIsLogged(true);
-        setState(() {
-          loading = false;
-        });
-        Navigator.of(context).popAndPushNamed('/home');
-        return loginResponse;
+
+        PushResponse? pushResponse =
+            await checkToken(loginResponse.data?.accessToken);
+        if (pushResponse != null) {
+          if (pushResponse.data!.isEmpty) {
+            await createToken(loginResponse.data?.accessToken,
+                loginResponse.data?.employeeId);
+          }
+          if (pushResponse.data?.first.token != token) {
+            await updateToken(loginResponse.data?.accessToken,
+                loginResponse.data?.employeeId, pushResponse.data?.first.id);
+          }
+        }
       } else {
         //checkError(response.statusCode);
         setState(() {
@@ -344,6 +415,15 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           Navigator.of(context).pushNamed('/registration');
                         },
                       )),
+                  SizedBox(height: 20),
+                  Center(
+                    child: Text('v1.0.0',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Montserrat',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w200)),
+                  )
                   // Container(
                   //     height: 80,
                   //     padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),

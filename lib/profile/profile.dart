@@ -39,12 +39,12 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
 
   Future downloadData() async {
     print("init");
-    var id = 114;
+    final id = await getEmployee();
     final authToken = await getBasicAuth();
     print(authToken);
     try {
       var response = await http.get(
-          Uri.parse(baseUrl + "/api/v1/employees/${id}"),
+          Uri.parse(baseUrl + "/api/v1/employees/" + id),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': "Bearer " + (authToken ?? "")
@@ -134,7 +134,8 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                             onPressed: () async {
                               setIsLogged(false);
                               removeBasicAuth();
-                              Navigator.of(context).pushNamed('/login');
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                  '/login', (Route<dynamic> route) => false);
                             },
                           )),
                     ],

@@ -1,10 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.ls_rent">
+    package="it.lsrent.it">
    <application
         android:label="LS RENT"
         android:icon="@mipmap/ic_launcher">
+         <meta-data
+           android:name="com.google.firebase.messaging.default_notification_icon"
+           android:resource="@drawable/ic_launcher_foreground" />
         <activity
             android:name=".MainActivity"
+            android:exported="true"
             android:launchMode="singleTop"
             android:requestLegacyExternalStorage="true"
             android:theme="@style/LaunchTheme"
@@ -45,4 +49,5 @@
     android:name="firebase_analytics_collection_enabled"
     android:value="false" />
     </application>
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

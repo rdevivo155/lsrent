@@ -1,4 +1,4 @@
-package com.example.ls_rent
+package it.lsrent.it
 
 import io.flutter.embedding.android.FlutterActivity
 
