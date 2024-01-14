@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 //import 'package:firebase_core/firebase_core.dart';
 //import 'package:firebase_messaging/firebase_messaging.dart';
@@ -38,6 +39,15 @@ const AndroidInitializationSettings initializationSettingsAndroid =
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 void main() async {
   // Set default home.
@@ -81,6 +91,7 @@ void main() async {
     '/stateOfVehicle': (BuildContext context) => new StateOfVehicle()
   };
 
+  HttpOverrides.global = MyHttpOverrides();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

@@ -81,6 +81,8 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double marginPercentage = 5; // Modifica questa percentuale a tuo piacimento
     return FutureBuilder(
         future: downloadData(),
         builder: (context, projectSnap) {
@@ -88,13 +90,15 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
             return Scaffold(
                 backgroundColor: Color(0xff569CDD),
                 body: SafeArea(
-                  minimum: const EdgeInsets.only(top: 100),
+                  minimum: EdgeInsets.only(
+                      top: screenHeight * marginPercentage / 100),
                   child: Column(
                     children: <Widget>[
                       // CircleAvatar(
                       //   radius: 50,
                       //   backgroundImage: AssetImage('assets/avatar.jpg'),
                       // ),
+
                       Text(
                         profileResponse!.data!.lastName!,
                         style: TextStyle(
@@ -104,6 +108,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                           fontFamily: "Pacifico",
                         ),
                       ),
+
                       Text(
                         profileResponse!.data!.firstName!,
                         style: TextStyle(
