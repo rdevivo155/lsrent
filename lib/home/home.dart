@@ -8,6 +8,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 import '../constants/constants.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 import '../../components/button.dart';
 import '../model/response/shift_of_the_day_response.dart';
@@ -152,13 +153,54 @@ List<DataRow> _createRows() {
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   bool isStartedAttendance = false;
   bool isEndedAttendance = false;
+  bool scan = false;
   bool loading = false;
+  String _authStatus = 'Unknown';
 
   @override
   initState() {
     super.initState();
+    initPlugin();
     //setupInteractedMessage();
   }
+
+  // Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> initPlugin() async {
+    final TrackingStatus status =
+        await AppTrackingTransparency.trackingAuthorizationStatus;
+    setState(() => _authStatus = '$status');
+    // If the system can show an authorization request dialog
+    if (status == TrackingStatus.notDetermined) {
+      // Show a custom explainer dialog before the system dialog
+      await showCustomTrackingDialog(context);
+      // Wait for dialog popping animation
+      await Future.delayed(const Duration(milliseconds: 200));
+      // Request system's tracking authorization dialog
+      final TrackingStatus status =
+          await AppTrackingTransparency.requestTrackingAuthorization();
+      setState(() => _authStatus = '$status');
+    }
+
+    final uuid = await AppTrackingTransparency.getAdvertisingIdentifier();
+    print("UUID: $uuid");
+  }
+
+  Future<void> showCustomTrackingDialog(BuildContext context) async =>
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Attenzione'),
+          content: const Text(
+            'I tuoi dati verranno utilizzati a fini di analisi e monitoraggio dei percorsi effettuati durante le operazioni di trasporto.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      );
 
   Future editShift() async {
     print("init");
@@ -175,7 +217,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               headers: <String, String>{
                 'Authorization': "Bearer " + authToken!
               },
-              body: isStartedAttendance
+              body: !isStartedAttendance
                   ? {
                       "employee_time_start": DateTime.now().toIso8601String(),
                       "employee_geolocation_start":
@@ -294,6 +336,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       if (response.statusCode == 200) {
         shiftOfTheDayResponse =
             ShiftOfTheDayResponse.fromJson(jsonDecode(response.body));
+
         setEmployee(shiftOfTheDayResponse?.data?.employeeId.toString() ?? "");
 
         await getVehicle();
@@ -436,7 +479,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Future sendPosition() async {
-    print("init");
     // Position? position = await Geolocator.getLastKnownPosition();
 
     // print('${position}');
@@ -461,9 +503,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   Widget getDashboard(context) {
     return Column(children: [
-      const SizedBox(height: 8.0),
       Padding(
-          padding: EdgeInsets.fromLTRB(20, 10, 20, 0),
+          padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
           child: Container(
             width: MediaQuery.of(context).size.width,
             child: Text(
@@ -665,14 +706,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                   ],
                 ),
                 body: shiftOfTheDayResponse != null
-                    ? Center(
+                    ? Container(
                         child: RefreshIndicator(
                             onRefresh: downloadData,
                             child: !loading
                                 ? ListView(
                                     scrollDirection: Axis.vertical,
                                     shrinkWrap: true,
-                                    padding: EdgeInsets.all(0),
+                                    padding: EdgeInsets.symmetric(vertical: 20),
                                     children: [
                                         getDashboard(context),
                                         getStateOfVehicol(context),
@@ -915,6 +956,77 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   fontSize: 16,
                                   fontFamily: "Montserrat",
                                   fontWeight: FontWeight.w700,
+                                ),
+                              )),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: Text(addressVehicle,
+                                  textAlign: TextAlign.center),
+                            ),
+                          ),
+                          GestureDetector(
+                              onTap: () async {
+                                // Attendere il completamento del download dei dati
+                                await downloadData();
+
+                                // Dopo che il download è completo, aggiornare lo stato
+                                setState(() {
+                                  // Aggiorna lo stato dell'applicazione in base ai dati scaricati
+                                });
+                                {
+                                  showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text("Attenzione"),
+                                          content: Text("Scansione turni"),
+                                        );
+                                      });
+                                }
+                                // sendPosition();
+                              },
+                              child: Container(
+                                width: 82,
+                                height: 77,
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: 82,
+                                      height: 77,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color.fromARGB(62, 0, 0, 0),
+                                            blurRadius: 4,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ],
+                                        color: Color(0xff569CDD),
+                                      ),
+                                    ),
+                                    Positioned.fill(
+                                      child: Align(
+                                        alignment: Alignment.center,
+                                        child: SizedBox(
+                                          width: 80,
+                                          height: 18,
+                                          child: Text(
+                                            "SCAN",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontFamily: "Montserrat",
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ))
                         ],

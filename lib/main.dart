@@ -26,6 +26,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 
 late FirebaseMessaging messaging;
+var initializationSettingsIOS = DarwinInitializationSettings(
+    requestSoundPermission: true,
+    requestBadgePermission: true,
+    requestAlertPermission: true,
+    onDidReceiveLocalNotification:
+        (int id, String? title, String? body, payload) async {});
 
 const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('ic_launcher_foreground');
@@ -42,14 +48,11 @@ void main() async {
 
   initFirebaseGoogleService();
 
-  final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+  final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   FirebaseMessaging.onMessage.listen((RemoteMessage event) {
-    RemoteNotification? notification = event.notification;
-    AndroidNotification? android = event.notification?.android;
-
     NotificationService().showNotification(
         title: event.notification!.title, body: event.notification!.body);
     print("message recieved");
@@ -78,20 +81,22 @@ void main() async {
     '/stateOfVehicle': (BuildContext context) => new StateOfVehicle()
   };
 
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown,])
-      .then((value) =>
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((value) =>
 
-          // Run app!
-          runApp(new MaterialApp(
-            title: 'App',
-            home: isLogged ? new Home() : new Login(),
-            debugShowCheckedModeBanner: false,
-            routes: routes,
-            onGenerateRoute: (settings) {
-              return CupertinoPageRoute(
-                  builder: (context) => routes[settings.name]!(context));
-            },
-          )));
+      // Run app!
+      runApp(new MaterialApp(
+        title: 'App',
+        home: isLogged ? new Home() : new Login(),
+        debugShowCheckedModeBanner: false,
+        routes: routes,
+        onGenerateRoute: (settings) {
+          return CupertinoPageRoute(
+              builder: (context) => routes[settings.name]!(context));
+        },
+      )));
 }
 
 void initFirebaseGoogleService() {

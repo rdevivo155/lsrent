@@ -366,6 +366,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                             style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 18,
+                                color: Colors.white,
                                 fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: validateFields()
@@ -407,6 +408,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                             style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 18,
+                                color: Colors.white,
                                 fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
                             primary: Color(0xff569CDD),
@@ -417,7 +419,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       )),
                   SizedBox(height: 20),
                   Center(
-                    child: Text('v1.0.0',
+                    child: Text('v1.0.1',
                         style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'Montserrat',

@@ -82,16 +82,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     final e = emailFormKey.currentState?.validate();
     final p = passwordFormKey.currentState?.validate();
     final cp = confirmPasswordFormKey.currentState?.validate();
-    final f = fiscalCodeFormKey.currentState?.validate();
+    //final f = fiscalCodeFormKey.currentState?.validate();
 
     if (p == true &&
         cp == true &&
         e == true &&
-        f == true &&
         nameController.text != "" &&
         passwordController.text != "" &&
-        confirmPasswordController.text != "" &&
-        fiscalCodeController.text != "") {
+        confirmPasswordController.text != "") {
       return true;
     }
     return false;
@@ -148,7 +146,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       } else {
         loading = false;
         AlertDialog(
-          title: Text("Errore"),
+          title: Text("Attenzione"),
           content: Text("I dati inseriti sono errati!"),
           actions: [
             ElevatedButton(
@@ -485,7 +483,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                             return AlertDialog(
                                               title: Text("Attenzione"),
                                               content: Text(
-                                                  "I dati inseriti sono errati!"),
+                                                  "Verifica con il tuo superiore l'avvenuta registrazione."),
                                               actions: [
                                                 ElevatedButton(
                                                   child: Text("Ok"),

@@ -37,6 +37,23 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
     super.initState();
   }
 
+  Future<void> showCustomDialog(BuildContext context) async =>
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Attenzione'),
+          content: const Text(
+            'Se si sceglie di continuare verrà eliminato l\'account',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Continua'),
+            ),
+          ],
+        ),
+      );
+
   Future downloadData() async {
     print("init");
     final id = await getEmployee();
@@ -128,6 +145,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                                 style: TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontSize: 18,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w800)),
                             style: ElevatedButton.styleFrom(
                                 primary: Color(0xfff4af49)),
@@ -136,6 +154,22 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                               removeBasicAuth();
                               Navigator.of(context).pushNamedAndRemoveUntil(
                                   '/login', (Route<dynamic> route) => false);
+                            },
+                          )),
+                      Container(
+                          height: 80,
+                          padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
+                          child: ElevatedButton(
+                            child: const Text('ELIMINA ACCOUNT',
+                                style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800)),
+                            style: ElevatedButton.styleFrom(
+                                primary: Color.fromARGB(255, 253, 12, 12)),
+                            onPressed: () async {
+                              showCustomDialog(context);
                             },
                           )),
                     ],
