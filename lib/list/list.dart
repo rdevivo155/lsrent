@@ -54,7 +54,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
           body: {
             "year": "${selectedDate?.year}",
             "month": "${selectedDate?.month}",
-          });
+          }).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         shiftsResponse = ShiftsResponse.fromJson(jsonDecode(response.body));
         shiftsResponse!.data!.dataModels!

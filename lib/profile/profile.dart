@@ -153,7 +153,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                                     color: Colors.white,
                                     fontWeight: FontWeight.w800)),
                             style: ElevatedButton.styleFrom(
-                                primary: Color(0xfff4af49)),
+                                backgroundColor: Color(0xfff4af49)),
                             onPressed: () async {
                               setIsLogged(false);
                               removeBasicAuth();
@@ -172,7 +172,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                                     color: Colors.white,
                                     fontWeight: FontWeight.w800)),
                             style: ElevatedButton.styleFrom(
-                                primary: Color.fromARGB(255, 253, 12, 12)),
+                                backgroundColor: Color.fromARGB(255, 253, 12, 12)),
                             onPressed: () async {
                               showCustomDialog(context);
                             },

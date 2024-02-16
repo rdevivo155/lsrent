@@ -72,7 +72,7 @@ class _MyHomePageState extends State<Accident> {
             "vehicle_id": vehicleId,
             "office_location_id": officeLocationId,
             "employee_id": employeeId
-          });
+          }).timeout(const Duration(seconds: 15));
 
       print(response.body);
 
@@ -91,7 +91,8 @@ class _MyHomePageState extends State<Accident> {
             .add(await http.MultipartFile.fromPath('picture', image!.path));
         request.headers.addAll(headers);
 
-        http.StreamedResponse responseImage = await request.send();
+        http.StreamedResponse responseImage =
+            await request.send().timeout(const Duration(seconds: 15));
 
         if (responseImage.statusCode == 202) {
           print(await responseImage.stream.bytesToString());
@@ -314,7 +315,7 @@ class _MyHomePageState extends State<Accident> {
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800)),
                               style: ElevatedButton.styleFrom(
-                                  primary: Color(0xfff4af49)),
+                                  backgroundColor: Color(0xfff4af49)),
                               onPressed: (loading)
                                   ? null
                                   : () async {

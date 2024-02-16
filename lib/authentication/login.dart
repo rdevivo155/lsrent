@@ -84,7 +84,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': "Bearer ${accessToken}"
       },
-    );
+    ).timeout(const Duration(seconds: 15));
 
     print(responsePush.body);
     if (responsePush.statusCode == 200) {
@@ -103,7 +103,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     }, body: {
       'id_user': id.toString(),
       'token': token
-    });
+    }).timeout(const Duration(seconds: 15));
 
     print(responsePush.body);
 
@@ -125,7 +125,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         body: {
           'id_user': id.toString(),
           'token': token
-        });
+        }).timeout(const Duration(seconds: 15));
 
     print(responsePush.body);
 
@@ -148,7 +148,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           body: {
             'username': username.trim(),
             'password': password.trim()
-          });
+          }).timeout(const Duration(seconds: 15));
 
       print(response.body);
 
@@ -411,7 +411,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
-                            primary: Color(0xff569CDD),
+                            backgroundColor: Color(0xff569CDD),
                             side: BorderSide(width: 1.0, color: Colors.white)),
                         onPressed: () {
                           Navigator.of(context).pushNamed('/registration');

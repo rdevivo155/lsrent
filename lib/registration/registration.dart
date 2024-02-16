@@ -119,7 +119,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             "password": password,
             "tax_code": taxCode,
             "terms": "1"
-          });
+          }).timeout(const Duration(seconds: 15));
       print(request.toJson());
 
       print(response.body);

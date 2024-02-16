@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 import '../constants/constants.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
-
+import 'package:connectivity/connectivity.dart';
 import '../../components/button.dart';
 import '../model/response/shift_of_the_day_response.dart';
 import '../model/response/vehicle_model_response.dart';
@@ -17,6 +17,7 @@ import '../model/response/vehicle_response.dart';
 import '../services/shared.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 ShiftOfTheDayResponse? shiftOfTheDayResponse;
 VehicleResponse? vehicleResponse;
@@ -54,7 +55,6 @@ List<Card> _buildGridCards(BuildContext context) {
   // buttons[1] = Button(name: 'Pagamenti', icon: 'Pagamenti');
   buttons[1] = Button(name: 'Guasto', icon: 'guasto');
   // buttons[3] = Button(name: 'Permessi', icon: 'permessi');
-  print("prova");
   if (buttons.isEmpty) {
     return const <Card>[];
   }
@@ -155,13 +155,55 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   bool isEndedAttendance = false;
   bool scan = false;
   bool loading = false;
+  bool isoffline = false;
   String _authStatus = 'Unknown';
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
 
   @override
   initState() {
     super.initState();
     initPlugin();
+    checkConnectivity();
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      // Esegui un'azione quando la connessione torna online
+      if (result == ConnectivityResult.wifi ||
+          result == ConnectivityResult.mobile) {
+        // Connessione tornata online
+        print('La connessione è tornata online');
+        setState(() {
+          isoffline = false;
+        });
+        // Esegui altre azioni necessarie qui
+      } else {
+        setState(() {
+          isoffline = true;
+        });
+      }
+    });
     //setupInteractedMessage();
+  }
+
+  Future<void> checkConnectivity() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult == ConnectivityResult.none) {
+      // Mostra un popup quando non c'è connessione di rete
+      showNoConnectionPopup();
+    }
+  }
+
+  void showNoConnectionPopup() {
+    isoffline = true;
+    Fluttertoast.showToast(
+      msg: "Nessuna connessione di rete",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.CENTER,
+      timeInSecForIosWeb: 3,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -251,6 +293,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Future downloadData() async {
+    checkConnectivity();
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -674,7 +717,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     return FutureBuilder(
         future: downloadData(),
         builder: (context, projectSnap) {
-          if (projectSnap.data != null) {
+          if (projectSnap.data != null && !isoffline) {
             return Scaffold(
                 resizeToAvoidBottomInset: false,
                 appBar: AppBar(
@@ -683,13 +726,31 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       onTap: () {
                         Navigator.of(context).pushNamed('/list');
                       },
-                      child: Padding(
-                        padding: EdgeInsets.only(right: 20.0),
-                        child: Icon(
-                          Icons.list_alt,
-                          size: 26.0,
-                        ),
-                      ),
+                      child: isoffline
+                          ? Column(children: [
+                              Padding(
+                                  padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width,
+                                    child: Text(
+                                      "Trovare una fonte di rete",
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 18,
+                                        fontFamily: "Montserrat",
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ))
+                            ])
+                          : Padding(
+                              padding: EdgeInsets.only(right: 20.0),
+                              child: Icon(
+                                Icons.list_alt,
+                                size: 26.0,
+                              ),
+                            ),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -1012,7 +1073,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                         alignment: Alignment.center,
                                         child: SizedBox(
                                           width: 80,
-                                          height: 18,
+                                          height: 25,
                                           child: Text(
                                             "SCAN",
                                             textAlign: TextAlign.center,
@@ -1110,6 +1171,15 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             //     );
             //   }),
             // )
+          } else if (isoffline) {
+            return Center(
+                child: Text("Assenza di rete",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontFamily: "Montserrat",
+                      fontWeight: FontWeight.w700,
+                    )));
           } else {
             return Center(
                 child: CircularProgressIndicator(
