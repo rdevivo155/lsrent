@@ -141,39 +141,63 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       BuildContext context, String username, String password) async {
     bool isOnline = await hasNetwork();
     if (isOnline) {
-      final response = await http.post(Uri.parse(baseUrl + "/api/v1/login"),
-          headers: <String, String>{
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: {
-            'username': username.trim(),
-            'password': password.trim()
-          }).timeout(const Duration(seconds: 15));
+      try {
+        final response = await http.post(Uri.parse(baseUrl + "/api/v1/login"),
+            headers: <String, String>{
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: {
+              'username': username.trim(),
+              'password': password.trim()
+            }).timeout(const Duration(seconds: 15));
 
-      print(response.body);
+        print(response.body);
 
-      if (response.statusCode == 200) {
-        LoginResponse loginResponse =
-            LoginResponse.fromJson(jsonDecode(response.body));
-        print(loginResponse.toJson());
-        setBasicAuth(loginResponse.data?.accessToken ?? "");
-        setEmployee(loginResponse.data?.employeeId.toString() ?? "");
-        setIsLogged(true);
+        if (response.statusCode == 200) {
+          LoginResponse loginResponse =
+              LoginResponse.fromJson(jsonDecode(response.body));
+          print(loginResponse.toJson());
+          setBasicAuth(loginResponse.data?.accessToken ?? "");
+          setEmployee(loginResponse.data?.employeeId.toString() ?? "");
+          setIsLogged(true);
 
-        PushResponse? pushResponse =
-            await checkToken(loginResponse.data?.accessToken);
-        if (pushResponse != null) {
-          if (pushResponse.data!.isEmpty) {
-            await createToken(loginResponse.data?.accessToken,
-                loginResponse.data?.employeeId);
+          PushResponse? pushResponse =
+              await checkToken(loginResponse.data?.accessToken);
+          if (pushResponse != null) {
+            if (pushResponse.data!.isEmpty) {
+              await createToken(loginResponse.data?.accessToken,
+                  loginResponse.data?.employeeId);
+            }
+            // if (pushResponse.data?.first.token != token) {
+            //   await updateToken(loginResponse.data?.accessToken,
+            //       loginResponse.data?.employeeId, pushResponse.data?.first.id);
+            // }
           }
-          if (pushResponse.data?.first.token != token) {
-            await updateToken(loginResponse.data?.accessToken,
-                loginResponse.data?.employeeId, pushResponse.data?.first.id);
-          }
+        } else {
+          //checkError(response.statusCode);
+          setState(() {
+            loading = false;
+          });
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Attenzione"),
+                  content: Text("L'email o la password sono errate"),
+                  actions: [
+                    ElevatedButton(
+                      child: Text("Ok"),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
+                );
+              });
+
+          return null;
         }
-      } else {
-        //checkError(response.statusCode);
+      } catch (error) {
         setState(() {
           loading = false;
         });
@@ -182,7 +206,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             builder: (BuildContext context) {
               return AlertDialog(
                 title: Text("Attenzione"),
-                content: Text("L'email o la password sono errate"),
+                content: Text("Errore di rete"),
                 actions: [
                   ElevatedButton(
                     child: Text("Ok"),
@@ -193,8 +217,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 ],
               );
             });
-
-        return null;
+        print("Errore durante la richiesta HTTP: $error");
       }
     } else {
       setState(() {

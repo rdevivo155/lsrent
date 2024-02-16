@@ -305,33 +305,34 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       return Future.error('Location services are disabled.');
     }
     permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.deniedForever) {
-        showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text("Attenzione"),
-                content: Text(
-                    "Se non attivi la localizzazione non ti sarà concesso di usare l'app. Andare nelle impostazioni e attivare la localizzazione."),
-                actions: [
-                  ElevatedButton(
-                    child: Text("Ok"),
-                    onPressed: () {
-                      setState(() {});
-                      Navigator.of(context).pop();
-                    },
-                  )
-                ],
-              );
-            });
-        // Permissions are denied forever, handle appropriately.
-        return Future.error(
-            'Location permissions are permanently denied, we cannot request permissions.');
-      }
-
-      if (permission == LocationPermission.denied) {
+      // if (permission == LocationPermission.deniedForever) {
+      //   showDialog(
+      //       context: context,
+      //       builder: (BuildContext context) {
+      //         return AlertDialog(
+      //           title: Text("Attenzione"),
+      //           content: Text(
+      //               "Se non attivi la localizzazione non ti sarà concesso di usare l'app. Andare nelle impostazioni e attivare la localizzazione."),
+      //           actions: [
+      //             ElevatedButton(
+      //               child: Text("Ok"),
+      //               onPressed: () {
+      //                 setState(() {});
+      //                 Navigator.of(context).pop();
+      //               },
+      //             )
+      //           ],
+      //         );
+      //       });
+      //   // Permissions are denied forever, handle appropriately.
+      //   return Future.error(
+      //       'Location permissions are permanently denied, we cannot request permissions.');
+      // }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -350,19 +351,19 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 ],
               );
             });
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.deniedForever) {
-          // Permissions are denied forever, handle appropriately.
-          return Future.error(
-              'Location permissions are permanently denied, we cannot request permissions.');
-        }
-        // Permissions are denied, next time you could try
-        // requesting permissions again (this is also where
-        // Android's shouldShowRequestPermissionRationale
-        // returned true. According to Android guidelines
-        // your App should show an explanatory UI now.
-        return Future.error('Location permissions are denied');
       }
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.deniedForever) {
+        // Permissions are denied forever, handle appropriately.
+        return Future.error(
+            'Location permissions are permanently denied, we cannot request permissions.');
+      }
+      // Permissions are denied, next time you could try
+      // requesting permissions again (this is also where
+      // Android's shouldShowRequestPermissionRationale
+      // returned true. According to Android guidelines
+      // your App should show an explanatory UI now.
+      return Future.error('Location permissions are denied');
     }
 
     // When we reach here, permissions are granted and we can
@@ -374,7 +375,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': "Bearer " + (authToken ?? "")
-          }).timeout((const Duration(seconds: 30)));
+          }).timeout((const Duration(seconds: 15)));
 
       if (response.statusCode == 200) {
         shiftOfTheDayResponse =
@@ -1171,7 +1172,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             //     );
             //   }),
             // )
-          } else if (isoffline) {
+          } else if (projectSnap.data != null && isoffline) {
             return Center(
                 child: Text("Assenza di rete",
                     style: TextStyle(
@@ -1181,10 +1182,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       fontWeight: FontWeight.w700,
                     )));
           } else {
-            return Center(
-                child: CircularProgressIndicator(
-              color: Color(0xff569CDD),
-            ));
+            return Center(child: Text("No location"));
           }
         });
   }
