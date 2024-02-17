@@ -162,7 +162,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   @override
   initState() {
     super.initState();
-    initPlugin();
     checkConnectivity();
     _connectivitySubscription = Connectivity()
         .onConnectivityChanged
@@ -182,6 +181,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         });
       }
     });
+    initPlugin();
     //setupInteractedMessage();
   }
 
@@ -216,7 +216,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       // Show a custom explainer dialog before the system dialog
       await showCustomTrackingDialog(context);
       // Wait for dialog popping animation
-      await Future.delayed(const Duration(milliseconds: 200));
+     // await Future.delayed(const Duration(milliseconds: 200));
       // Request system's tracking authorization dialog
       final TrackingStatus status =
           await AppTrackingTransparency.requestTrackingAuthorization();
