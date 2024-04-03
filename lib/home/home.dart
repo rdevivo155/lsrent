@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
-import 'package:location/location.dart';
 import '../constants/constants.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:connectivity/connectivity.dart';
@@ -89,7 +86,7 @@ List<Card> _buildGridCards(BuildContext context) {
 // TODO: Handle overflowing labels (103)
                   Text(
                     button.name,
-                    style: theme.textTheme.button,
+                    style: theme.textTheme.labelLarge,
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
@@ -216,7 +213,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       // Show a custom explainer dialog before the system dialog
       await showCustomTrackingDialog(context);
       // Wait for dialog popping animation
-     // await Future.delayed(const Duration(milliseconds: 200));
+      // await Future.delayed(const Duration(milliseconds: 200));
       // Request system's tracking authorization dialog
       final TrackingStatus status =
           await AppTrackingTransparency.requestTrackingAuthorization();
@@ -255,7 +252,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       var response = await http
           .put(
               Uri.parse(baseUrl +
-                  "/api/v1/shifts/${shiftOfTheDayResponse!.data!.id}"),
+                  "/api/v1/shifts/update/${shiftOfTheDayResponse!.data!.id}"),
               headers: <String, String>{
                 'Authorization': "Bearer " + authToken!
               },
@@ -370,6 +367,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     // continue accessing the position of the device.
     Position pos = await Geolocator.getCurrentPosition();
     final authToken = await getBasicAuth();
+    print(authToken);
     try {
       var response = await http.get(Uri.parse(baseUrl + "/api/v1/shifts/me"),
           headers: <String, String>{
@@ -382,7 +380,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             ShiftOfTheDayResponse.fromJson(jsonDecode(response.body));
 
         setEmployee(shiftOfTheDayResponse?.data?.employeeId.toString() ?? "");
-
+        setVehicle(shiftOfTheDayResponse?.data?.vehicleId .toString() ?? "");
         await getVehicle();
         isStartedAttendance =
             shiftOfTheDayResponse?.data?.employeeTimeStart != null
@@ -1028,69 +1026,78 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   textAlign: TextAlign.center),
                             ),
                           ),
-                          GestureDetector(
-                              onTap: () async {
-                                // Attendere il completamento del download dei dati
-                                await downloadData();
+                          // GestureDetector(
+                          //   onTap: () async {
+                          //     // Attendere il completamento del download dei dati
+                          //     await downloadData();
 
-                                // Dopo che il download è completo, aggiornare lo stato
-                                setState(() {
-                                  // Aggiorna lo stato dell'applicazione in base ai dati scaricati
-                                });
-                                {
-                                  showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text("Attenzione"),
-                                          content: Text("Scansione turni"),
-                                        );
-                                      });
-                                }
-                                // sendPosition();
-                              },
-                              child: Container(
-                                width: 82,
-                                height: 77,
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: 82,
-                                      height: 77,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color.fromARGB(62, 0, 0, 0),
-                                            blurRadius: 4,
-                                            offset: Offset(0, 4),
-                                          ),
-                                        ],
-                                        color: Color(0xff569CDD),
-                                      ),
-                                    ),
-                                    Positioned.fill(
-                                      child: Align(
-                                        alignment: Alignment.center,
-                                        child: SizedBox(
-                                          width: 80,
-                                          height: 25,
-                                          child: Text(
-                                            "SCAN",
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontFamily: "Montserrat",
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ))
+                          //     // Aggiornare lo stato dell'applicazione in base ai dati scaricati
+                          //     setState(() {
+                          //       // Aggiorna lo stato dell'applicazione in base ai dati scaricati
+                          //     });
+
+                          //     // Mostrare la nuova dialog
+                          //     if (!loading) {
+                          //       showDialog(
+                          //           context: context,
+                          //           builder: (BuildContext context) {
+                          //             Timer(Duration(seconds: 5), () {
+                          //               // Chiudi la dialog e impostare la variabile showAlertDialog a false
+                          //               Navigator.pop(context);
+                          //             });
+                          //             return AlertDialog(
+                          //               title: Text("Attenzione"),
+                          //               content: Text("Scansione turni"),
+                          //             );
+                          //           });
+                          //     }
+
+                          //     // Eseguire altre operazioni dopo la visualizzazione della dialog
+                          //     // sendPosition();
+                          //   },
+                          //   child: Container(
+                          //     width: 82,
+                          //     height: 77,
+                          //     child: Stack(
+                          //       children: [
+                          //         Container(
+                          //           width: 182,
+                          //           height: 177,
+                          //           decoration: BoxDecoration(
+                          //             shape: BoxShape.circle,
+                          //             boxShadow: [
+                          //               BoxShadow(
+                          //                 color: Color.fromARGB(62, 0, 0, 0),
+                          //                 blurRadius: 4,
+                          //                 offset: Offset(0, 4),
+                          //               ),
+                          //             ],
+                          //             color: Color(0xff569CDD),
+                          //           ),
+                          //         ),
+                          //         Positioned.fill(
+                          //           child: Align(
+                          //             alignment: Alignment.center,
+                          //             child: SizedBox(
+                          //               width: 180,
+                          //               height: 25,
+                          //               child: Text(
+                          //                 "TURNO",
+                          //                 textAlign: TextAlign.center,
+                          //                 style: TextStyle(
+                          //                   color: Colors.white,
+                          //                   fontSize: 16,
+                          //                   fontFamily: "Montserrat",
+                          //                   fontWeight: FontWeight.w700,
+                          //                 ),
+                          //               ),
+                          //             ),
+                          //           ),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ),
+                          // )
                         ],
                       ));
 
@@ -1182,7 +1189,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       fontWeight: FontWeight.w700,
                     )));
           } else {
-            return Center(child: Text("No location"));
+            return Center(
+                child: Text("Attiva la localizzazione per poter usare l'app"));
           }
         });
   }
@@ -1340,7 +1348,7 @@ Widget getStateOfVehicol(context) {
                     left: 25,
                     right: 29,
                     top: 12,
-                    bottom: 21,
+                    bottom: 20,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

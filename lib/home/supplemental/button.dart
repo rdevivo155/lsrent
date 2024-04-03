@@ -39,7 +39,7 @@ class ButtonCustom extends StatelessWidget {
             children: <Widget>[
               Text(
                 button.name,
-                style: theme.textTheme.headline6,
+                style: theme.textTheme.titleLarge,
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,

@@ -54,7 +54,7 @@ class _MyHomePageState extends State<StateOfVehicle> {
       final employeeId = await getEmployee();
 
       final response = await http.post(
-          Uri.parse(baseUrl + "/api/v1/vehicle-conditions"),
+          Uri.parse(baseUrl + "/api/v1/vehicle-conditions/create"),
           headers: <String, String>{
             'Authorization': "Bearer " + authToken!
           },
@@ -81,9 +81,9 @@ class _MyHomePageState extends State<StateOfVehicle> {
         var request = http.MultipartRequest(
             'POST',
             Uri.parse(baseUrl +
-                '/api/v1/vehicle-conditions/${statusOfVehicleResponse.data?.id ?? ""}/upload-image'));
+                '/api/v1/vehicle-conditions/upload/${statusOfVehicleResponse.data?.id ?? ""}'));
         request.files
-            .add(await http.MultipartFile.fromPath('picture', image.path));
+            .add(await http.MultipartFile.fromPath('uploadedFile', image.path));
         request.headers.addAll(headers);
 
         http.StreamedResponse responseImage =

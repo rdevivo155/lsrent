@@ -3,10 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:ls_rent/constants/api.dart';
-import 'package:ls_rent/model/response/login_response.dart';
-import 'package:ls_rent/services/shared.dart';
-import 'package:ls_rent/services/network.dart' as network;
 
 import '../model/request/registration_request.dart';
 import '../model/response/registration_response.dart';

@@ -46,14 +46,10 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
 
     final authToken = await getBasicAuth();
     try {
-      final response = await http.post(
-          Uri.parse(baseUrl + "/api/v1/shifts/bydate"),
+      final response = await http.get(
+          Uri.parse(baseUrl + "/api/v1/shifts?year=${selectedDate?.year}&month=${selectedDate?.month}"),
           headers: <String, String>{
             'Authorization': "Bearer " + authToken!
-          },
-          body: {
-            "year": "${selectedDate?.year}",
-            "month": "${selectedDate?.month}",
           }).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         shiftsResponse = ShiftsResponse.fromJson(jsonDecode(response.body));
@@ -82,7 +78,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                   Center(
                       child: Text(
                     'Anno: ${selectedDate?.year}\nMese: ${selectedDate?.month}',
-                    style: Theme.of(context).textTheme.headline5,
+                    style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   )),
                   FloatingActionButton(

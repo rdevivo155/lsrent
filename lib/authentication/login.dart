@@ -3,11 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:ls_rent/constants/api.dart';
 import 'package:ls_rent/constants/globals.dart';
 import 'package:ls_rent/model/response/login_response.dart';
 import 'package:ls_rent/services/shared.dart';
-import 'package:ls_rent/services/network.dart' as network;
 import '../constants/constants.dart';
 import '../model/response/push_response.dart';
 
@@ -113,6 +111,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       });
       Navigator.of(context).popAndPushNamed('/home');
     }
+    return null;
   }
 
   Future<PushResponse?> updateToken(accessToken, id, pushID) async {
@@ -135,6 +134,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       });
       Navigator.of(context).popAndPushNamed('/home');
     }
+    return null;
   }
 
   Future<LoginResponse?> loginAuth(
@@ -142,7 +142,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     bool isOnline = await hasNetwork();
     if (isOnline) {
       try {
-        final response = await http.post(Uri.parse(baseUrl + "/api/v1/login"),
+        final response = await http.post(Uri.parse(baseUrl + "/api/v1/guest/login"),
             headers: <String, String>{
               'Content-Type': 'application/x-www-form-urlencoded'
             },
@@ -241,6 +241,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           });
       return null;
     }
+    return null;
   }
 
   @override

@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:ls_rent/components/info_card.dart';
 import 'package:http/http.dart' as http;
 import 'package:ls_rent/services/response/profile_response.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/constants.dart';
 
 import '../services/shared.dart';

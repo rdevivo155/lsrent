@@ -9,7 +9,6 @@ import 'package:ls_rent/accident/accident.dart';
 import 'package:ls_rent/authentication/login.dart';
 import 'package:ls_rent/firebase_options.dart';
 import 'package:ls_rent/home/home.dart';
-import 'package:ls_rent/dayOff/dayOff.dart';
 import 'package:flutter/material.dart';
 import 'package:ls_rent/profile/profile.dart';
 import 'package:ls_rent/list/list.dart';
@@ -18,10 +17,8 @@ import 'package:ls_rent/services/notification_service.dart';
 import 'package:ls_rent/services/shared.dart';
 import 'package:ls_rent/stateOfVehicle/stateOfVehicle.dart';
 
-import 'SplashScreen/splash_screen.dart';
 import 'brokenDown/brokenDown.dart';
 import 'constants/globals.dart';
-import 'home/home.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
@@ -81,7 +78,7 @@ void main() async {
   var routes = <String, WidgetBuilder>{
     // Set routes for using the Navigator.
     '/home': (BuildContext context) => new Home(),
-    '/accident': (BuildContext context) => new Accident(),
+    '/accident': (BuildContext context) => new AccidentPage(),
     '/broken-down': (BuildContext context) => new BrokenDown(),
     // '/day-off': (BuildContext context) => new DayOff(),
     '/login': (BuildContext context) => new Login(),

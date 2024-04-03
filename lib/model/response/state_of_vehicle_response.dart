@@ -27,10 +27,10 @@ class Data {
   String? title;
   String? description;
   String? vehicleId;
-  String? officeLocationId;
-  String? employeeId;
+  int? officeLocationId;
+  int? employeeId;
   int? timestamp;
-  Null? fileName;
+  Null fileName;
   int? id;
 
   Data(

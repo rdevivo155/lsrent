@@ -13,16 +13,16 @@ import '../constants/constants.dart';
 final titleFormKey = GlobalKey<FormState>(debugLabel: "title");
 final descriptionFormKey = GlobalKey<FormState>(debugLabel: "description");
 
-class Accident extends StatefulWidget {
-  const Accident({Key? key, this.title}) : super(key: key);
+class AccidentPage extends StatefulWidget {
+  const AccidentPage({Key? key, this.title}) : super(key: key);
 
   final String? title;
 
   @override
-  State<Accident> createState() => _MyHomePageState();
+  State<AccidentPage> createState() => _AccidentPageState();
 }
 
-class _MyHomePageState extends State<Accident> {
+class _AccidentPageState extends State<AccidentPage> {
   File? imageToSend;
   bool loading = false;
   bool error = false;
@@ -61,7 +61,7 @@ class _MyHomePageState extends State<Accident> {
       final employeeId = await getEmployee();
 
       final response = await http.post(
-          Uri.parse(baseUrl + "/api/v1/vehicle-accidents"),
+          Uri.parse(baseUrl + "/api/v1/vehicle-accidents/create"),
           headers: <String, String>{
             'Authorization': "Bearer " + authToken!
           },
