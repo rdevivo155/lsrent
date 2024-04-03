@@ -98,28 +98,15 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                             loading = false;
                             selectedDate = date;
                           });
+                        } else {
+                           setState(() {
+                            loading = false;
+                          });
                         }
                       });
-                      // showMonthPicker(
-                      //   context: context,
-                      //   firstDate: DateTime(DateTime.now().year - 1, 5),
-                      //   lastDate: DateTime(DateTime.now().year + 1, 9),
-                      //   initialDate: selectedDate ?? DateTime.now(),
-                      //   locale: Locale("it"),
-                      // ).then((date) async {
-                      //   setState(() {
-                      //     loading = true;
-                      //   });
-                      //   var calendar = await downloadData();
-                      //   if (date != null) {
-                      //     setState(() {
-                      //       loading = false;
-                      //       selectedDate = date;
-                      //     });
-                      //   }
-                      // });
                     },
                     child: Icon(Icons.calendar_today),
+                    backgroundColor: Color(0xff569CDD),
                   ),
                   !loading
                       ? Expanded(

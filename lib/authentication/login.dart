@@ -110,6 +110,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         loading = false;
       });
       Navigator.of(context).popAndPushNamed('/home');
+    } else {
+       setState(() {
+        loading = false;
+      });
+      Navigator.of(context).popAndPushNamed('/home');
     }
     return null;
   }

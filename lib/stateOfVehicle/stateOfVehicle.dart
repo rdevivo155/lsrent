@@ -315,6 +315,7 @@ class _MyHomePageState extends State<StateOfVehicle> {
                                   style: TextStyle(
                                       fontFamily: 'Montserrat',
                                       fontSize: 18,
+                                      color: Colors.white,
                                       fontWeight: FontWeight.w800)),
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Color(0xfff4af49)),

@@ -96,10 +96,15 @@ void main() async {
 
       // Run app!
       runApp(new MaterialApp(
-        title: 'App',
+        title: 'App',  
         home: isLogged ? new Home() : new Login(),
         debugShowCheckedModeBanner: false,
         routes: routes,
+        theme: ThemeData(
+                  useMaterial3: true,
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: Colors.blue,
+                  )),
         onGenerateRoute: (settings) {
           return CupertinoPageRoute(
               builder: (context) => routes[settings.name]!(context));

@@ -414,6 +414,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                             style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 18,
+                                color: Colors.white,
                                 fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
                             backgroundColor: validateFields()

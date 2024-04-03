@@ -305,29 +305,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       permission = await Geolocator.requestPermission();
-      // if (permission == LocationPermission.deniedForever) {
-      //   showDialog(
-      //       context: context,
-      //       builder: (BuildContext context) {
-      //         return AlertDialog(
-      //           title: Text("Attenzione"),
-      //           content: Text(
-      //               "Se non attivi la localizzazione non ti sarà concesso di usare l'app. Andare nelle impostazioni e attivare la localizzazione."),
-      //           actions: [
-      //             ElevatedButton(
-      //               child: Text("Ok"),
-      //               onPressed: () {
-      //                 setState(() {});
-      //                 Navigator.of(context).pop();
-      //               },
-      //             )
-      //           ],
-      //         );
-      //       });
-      //   // Permissions are denied forever, handle appropriately.
-      //   return Future.error(
-      //       'Location permissions are permanently denied, we cannot request permissions.');
-      // }
+   
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         showDialog(
@@ -355,17 +333,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         return Future.error(
             'Location permissions are permanently denied, we cannot request permissions.');
       }
-      // Permissions are denied, next time you could try
-      // requesting permissions again (this is also where
-      // Android's shouldShowRequestPermissionRationale
-      // returned true. According to Android guidelines
-      // your App should show an explanatory UI now.
+    
       return Future.error('Location permissions are denied');
     }
 
-    // When we reach here, permissions are granted and we can
-    // continue accessing the position of the device.
-    Position pos = await Geolocator.getCurrentPosition();
     final authToken = await getBasicAuth();
     print(authToken);
     try {
@@ -452,20 +423,16 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       return response;
     } on TimeoutException catch (_) {
       print("non funziona");
-      // checkError(0, "Connessione assente!");
-    } // return your response
+    
+    } 
   }
 
   Future getVehicle() async {
-    print("init");
-    // Position? position = await Geolocator.getLastKnownPosition();
-
-    // print('${position}');
     final authToken = await getBasicAuth();
     try {
       var response = await http.get(
           Uri.parse(baseUrl +
-              "/api/v1/vehicles/${shiftOfTheDayResponse!.data!.vehicleId}"),
+              "/api/v1/vehicles/view/${shiftOfTheDayResponse!.data!.vehicleId}"),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': "Bearer " + authToken!
@@ -485,15 +452,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Future getVehicleModel() async {
-    print("init");
-    // Position? position = await Geolocator.getLastKnownPosition();
-
-    // print('${position}');
     final authToken = await getBasicAuth();
     try {
       var response = await http.get(
           Uri.parse(baseUrl +
-              "/api/v1/vehicle-models/${vehicleResponse!.data!.vehicleModelId}"),
+              "/api/v1/vehicle-models/view/${vehicleResponse!.data!.vehicleModelId}"),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': "Bearer " + authToken!
@@ -506,7 +469,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       return response;
     } on TimeoutException catch (_) {
       print("non funziona");
-      // checkError(0, "Connessione assente!");
     }
   }
 
@@ -538,8 +500,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       } else if (response.statusCode == 401 || response.statusCode >= 500) {}
       return response;
     } on TimeoutException catch (_) {
-      print("non funziona");
-      // checkError(0, "Connessione assente!");
     }
   }
 
@@ -766,21 +726,38 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                   ],
                 ),
                 body: shiftOfTheDayResponse != null
-                    ? Container(
-                        child: RefreshIndicator(
-                            onRefresh: downloadData,
-                            child: !loading
-                                ? ListView(
-                                    scrollDirection: Axis.vertical,
-                                    shrinkWrap: true,
-                                    padding: EdgeInsets.symmetric(vertical: 20),
-                                    children: [
-                                        getDashboard(context),
-                                        getStateOfVehicol(context),
-                                        Container(
+                    ? Column(
+                      children: [
+                        Expanded(
+                            child: RefreshIndicator(
+                                onRefresh: downloadData,
+                                child: !loading
+                                    ? ListView(
+                                        scrollDirection: Axis.vertical,
+                                        shrinkWrap: true,
+                                        padding: EdgeInsets.symmetric(vertical: 20),
+                                        children: [
+                                            getDashboard(context),
+                                            getStateOfVehicol(context)
+                                            
+                        
+                                            //non qua
+                                          ])
+                                    : Container(
+                                        height: MediaQuery.of(context).size.height,
+                                        width: MediaQuery.of(context).size.width,
+                                        alignment: Alignment.center,
+                                        child: const SizedBox(
+                                            width: 40,
+                                            height: 40,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.black,
+                                              strokeWidth: 3.5,
+                                            ))))),
+                                            Container(
                                           constraints: BoxConstraints(
                                               minWidth: double.infinity,
-                                              maxHeight: 170),
+                                              maxHeight: 200),
                                           decoration: new BoxDecoration(
                                             color: Color(0x4d7BCEFD),
                                           ),
@@ -988,21 +965,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                                   ),
                                                 ),
                                               ]),
-                                        ),
-
-                                        //non qua
-                                      ])
-                                : Container(
-                                    height: MediaQuery.of(context).size.height,
-                                    width: MediaQuery.of(context).size.width,
-                                    alignment: Alignment.center,
-                                    child: const SizedBox(
-                                        width: 40,
-                                        height: 40,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.black,
-                                          strokeWidth: 3.5,
-                                        )))))
+                                        )
+                      ],
+                    )
                     : Column(
                         children: [
                           SizedBox(height: 100),
@@ -1026,159 +991,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   textAlign: TextAlign.center),
                             ),
                           ),
-                          // GestureDetector(
-                          //   onTap: () async {
-                          //     // Attendere il completamento del download dei dati
-                          //     await downloadData();
-
-                          //     // Aggiornare lo stato dell'applicazione in base ai dati scaricati
-                          //     setState(() {
-                          //       // Aggiorna lo stato dell'applicazione in base ai dati scaricati
-                          //     });
-
-                          //     // Mostrare la nuova dialog
-                          //     if (!loading) {
-                          //       showDialog(
-                          //           context: context,
-                          //           builder: (BuildContext context) {
-                          //             Timer(Duration(seconds: 5), () {
-                          //               // Chiudi la dialog e impostare la variabile showAlertDialog a false
-                          //               Navigator.pop(context);
-                          //             });
-                          //             return AlertDialog(
-                          //               title: Text("Attenzione"),
-                          //               content: Text("Scansione turni"),
-                          //             );
-                          //           });
-                          //     }
-
-                          //     // Eseguire altre operazioni dopo la visualizzazione della dialog
-                          //     // sendPosition();
-                          //   },
-                          //   child: Container(
-                          //     width: 82,
-                          //     height: 77,
-                          //     child: Stack(
-                          //       children: [
-                          //         Container(
-                          //           width: 182,
-                          //           height: 177,
-                          //           decoration: BoxDecoration(
-                          //             shape: BoxShape.circle,
-                          //             boxShadow: [
-                          //               BoxShadow(
-                          //                 color: Color.fromARGB(62, 0, 0, 0),
-                          //                 blurRadius: 4,
-                          //                 offset: Offset(0, 4),
-                          //               ),
-                          //             ],
-                          //             color: Color(0xff569CDD),
-                          //           ),
-                          //         ),
-                          //         Positioned.fill(
-                          //           child: Align(
-                          //             alignment: Alignment.center,
-                          //             child: SizedBox(
-                          //               width: 180,
-                          //               height: 25,
-                          //               child: Text(
-                          //                 "TURNO",
-                          //                 textAlign: TextAlign.center,
-                          //                 style: TextStyle(
-                          //                   color: Colors.white,
-                          //                   fontSize: 16,
-                          //                   fontFamily: "Montserrat",
-                          //                   fontWeight: FontWeight.w700,
-                          //                 ),
-                          //               ),
-                          //             ),
-                          //           ),
-                          //         ),
-                          //       ],
-                          //     ),
-                          //   ),
-                          // )
                         ],
                       ));
 
-            //         Padding(
-            //   padding: const EdgeInsets.only(top: 15.0),
-            //   child: LayoutBuilder(builder: (context, constraints) {
-            //     return SingleChildScrollView(
-            //       child: Container(
-            //         height: constraints.maxHeight,
-            //         child: Column(
-            //           children: <Widget>[
-            //             ListView.builder(
-            //               scrollDirection: Axis.vertical,
-            //               shrinkWrap: true,
-            //               itemBuilder: (contetx, index) {
-            //                 return Column(
-            //                   children: [
-            //                     Padding(
-            //                       padding: const EdgeInsets.only(
-            //                           top: 8.0, left: 15, right: 15),
-            //                       child: Row(
-            //                         mainAxisAlignment:
-            //                             MainAxisAlignment.spaceBetween,
-            //                         children: [
-            //                           Container(
-            //                             child: Text(
-            //                               "1",
-            //                               style: TextStyle(
-            //                                   fontWeight: FontWeight.bold),
-            //                             ),
-            //                             margin: EdgeInsets.only(left: 5.0),
-            //                           ),
-            //                           Container(
-            //                               child: Text(
-            //                             ("2"),
-            //                             style: TextStyle(fontSize: 18),
-            //                           )),
-            //                         ],
-            //                       ),
-            //                     ),
-            //                     Divider(
-            //                       thickness: 1,
-            //                       indent: 20,
-            //                       endIndent: 20,
-            //                     ),
-            //                   ],
-            //                 );
-            //               },
-            //               itemCount: 2,
-            //             ),
-            //             const Spacer(),
-            //             Align(
-            //               alignment: Alignment.bottomCenter,
-            //               child: Padding(
-            //                 padding: const EdgeInsets.all(15.0),
-            //                 child: Row(
-            //                   mainAxisAlignment:
-            //                       MainAxisAlignment.spaceBetween,
-            //                   children: [
-            //                     Text(
-            //                       'Total'.toUpperCase(),
-            //                       style: TextStyle(
-            //                           fontWeight: FontWeight.bold,
-            //                           fontSize: 20),
-            //                     ),
-            //                     Text(
-            //                       ("2"),
-            //                       style: TextStyle(
-            //                           fontWeight: FontWeight.bold,
-            //                           fontSize: 18),
-            //                     ),
-            //                   ],
-            //                 ),
-            //               ),
-            //             ),
-            //           ],
-            //         ),
-            //       ),
-            //     );
-            //   }),
-            // )
+     
           } else if (projectSnap.data != null && isoffline) {
             return Center(
                 child: Text("Assenza di rete",
@@ -1355,12 +1171,7 @@ Widget getStateOfVehicol(context) {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Container(
-                      //   width: 96,
-                      //   height: 96,
-                      //   child:
-                      //       Image.asset('assets/crashedCar.png'),
-                      // ),
+                 
                       Text(
                         "Stato del veicolo",
                         textAlign: TextAlign.center,
