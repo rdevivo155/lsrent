@@ -166,18 +166,22 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           setEmployee(loginResponse.data?.employeeId.toString() ?? "");
           setIsLogged(true);
 
-          PushResponse? pushResponse =
-              await checkToken(loginResponse.data?.accessToken);
-          if (pushResponse != null) {
-            if (pushResponse.data!.isEmpty) {
-              await createToken(loginResponse.data?.accessToken,
-                  loginResponse.data?.employeeId);
-            }
+          // PushResponse? pushResponse =
+          //     await checkToken(loginResponse.data?.accessToken);
+          // if (pushResponse != null) {
+          //   if (pushResponse.data!.isEmpty) {
+          //     await createToken(loginResponse.data?.accessToken,
+          //         loginResponse.data?.employeeId);
+          //   }
             // if (pushResponse.data?.first.token != token) {
             //   await updateToken(loginResponse.data?.accessToken,
             //       loginResponse.data?.employeeId, pushResponse.data?.first.id);
             // }
-          }
+          //}
+           setState(() {
+                                    loading = false;
+                                  });
+                                  Navigator.of(context).popAndPushNamed('/home');
         } else {
           //checkError(response.statusCode);
           setState(() {

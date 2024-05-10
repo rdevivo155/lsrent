@@ -22,6 +22,8 @@ VehicleModelResponse? vehicleModelResponse;
 String addressVehicle = "";
 String address1 = "";
 String address2 = "";
+bool serviceEnabled = false;
+LocationPermission permission = LocationPermission.denied;
 
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
@@ -242,57 +244,57 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       );
 
   Future editShift() async {
-    print("init");
-    Position? position = await Geolocator.getLastKnownPosition();
-
-    print('${position}');
-    final authToken = await getBasicAuth();
-    print(authToken);
     try {
+      Position? position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      if (position == "null") {
+        throw Exception('Position is null');
+      }
+      final authToken = await getBasicAuth();
       var response = await http
           .put(
-              Uri.parse(baseUrl +
-                  "/api/v1/shifts/update/${shiftOfTheDayResponse!.data!.id}"),
+              Uri.parse(baseUrl + "/api/v1/shifts/update/${shiftOfTheDayResponse!.data!.id}"),
               headers: <String, String>{
                 'Authorization': "Bearer " + authToken!
               },
               body: !isStartedAttendance
                   ? {
                       "employee_time_start": DateTime.now().toIso8601String(),
-                      "employee_geolocation_start":
-                          "{\"lat\":${position?.latitude},\"lng\":${position?.longitude}}"
+                      "employee_geolocation_start": "{\"lat\":${position.latitude},\"lng\":${position.longitude}}"
                     }
                   : {
                       "employee_time_end": DateTime.now().toIso8601String(),
-                      "employee_geolocation_end":
-                          "{\"lat\":${position?.latitude},\"lng\":${position?.longitude}}"
+                      "employee_geolocation_end": "{\"lat\":${position.latitude},\"lng\":${position.longitude}}"
                     })
           .timeout((const Duration(seconds: 10)));
 
-      print(response.statusCode);
-      print("errore : ${response.statusCode}");
       if (response.statusCode == 202) {
         setState(() {
           loading = false;
           shiftOfTheDayResponse =
               ShiftOfTheDayResponse.fromJson(jsonDecode(response.body));
         });
-
         await getVehicle();
-      } else if (response.statusCode == 401 || response.statusCode >= 500) {}
+      } else if (response.statusCode == 401 || response.statusCode >= 500) {
+        showSnackBar(context, 'Errore di autenticazione.');
+      }
       return response;
     } on TimeoutException catch (_) {
       setState(() {
         loading = false;
       });
-      // checkError(0, "Connessione assente!");
-    } // return your response
+      showSnackBar(context, 'Errore di connessione');
+    } catch (e) {
+      showSnackBar(context, 'An error occurred: ${e.toString()}');
+    }
+  }
+
+  void showSnackBar(BuildContext context, String message) {
+    final snackBar = SnackBar(content: Text(message));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   Future downloadData() async {
     checkConnectivity();
-    bool serviceEnabled;
-    LocationPermission permission;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -417,6 +419,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           address2 =
               '${place2.street}, ${place2.subLocality}, ${place2.locality}, ${place2.postalCode}, ${place2.country}';
         }
+        return response;
       } else if (response.statusCode == 401 ||
           response.statusCode == 404 ||
           response.statusCode >= 500) {}
@@ -676,7 +679,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     return FutureBuilder(
         future: downloadData(),
         builder: (context, projectSnap) {
-          if (projectSnap.data != null && !isoffline) {
+          if (projectSnap.data != null && !isoffline && serviceEnabled) {
             return Scaffold(
                 resizeToAvoidBottomInset: false,
                 appBar: AppBar(
