@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:ls_rent/constants/constants.dart';
 
 class InfoCard extends StatelessWidget {
   // the values we need
   final String? text;
   final IconData? icon;
-  Function? onPressed;
+  final Function? onPressed;
 
   InfoCard(
       {@required this.text, @required this.icon, @required this.onPressed});
@@ -21,7 +22,7 @@ class InfoCard extends StatelessWidget {
         child: ListTile(
           leading: Icon(
             icon,
-            color: Color(0xff569CDD),
+            color: baseBackgroundColor,
           ),
           title: Text(
             text ?? "",

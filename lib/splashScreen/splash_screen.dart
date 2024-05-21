@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ls_rent/constants/constants.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key, this.title}) : super(key: key);
@@ -22,9 +23,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-        backgroundColor: Color(0xff569CDD),
+        backgroundColor: baseBackgroundColor,
         body: Center(
             child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -35,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
         children: [
         Image.asset('assets/logoApp.png',width: 150,height: 150,),
 
-          
+
         ],
 
       ),

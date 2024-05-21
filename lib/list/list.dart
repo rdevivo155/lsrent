@@ -25,7 +25,7 @@ class ListShits extends StatelessWidget {
           title: const Text('Turni'),
         ),
         body: MyStatefulWidget(),
-        backgroundColor: Color(0xff569CDD));
+        backgroundColor: baseBackgroundColor);
   }
 }
 
@@ -106,7 +106,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                       });
                     },
                     child: Icon(Icons.calendar_today),
-                    backgroundColor: Color(0xff569CDD),
+                    backgroundColor: baseBackgroundColor,
                   ),
                   !loading
                       ? Expanded(
@@ -255,7 +255,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
                       : Container(
                           padding: EdgeInsets.all(100),
                           child: const CircularProgressIndicator(
-                            color: Color(0xff569CDD),
+                            color: baseBackgroundColor,
                           ),
                         )
                 ])));

@@ -31,7 +31,7 @@ class Login extends StatelessWidget {
           }
         },
         child: Scaffold(
-            body: MyStatefulWidget(), backgroundColor: Color(0xff569CDD)));
+            body: MyStatefulWidget(), backgroundColor: baseBackgroundColor));
   }
 }
 
@@ -39,7 +39,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  TextStyle? labelStyle;
   bool loading = false;
   bool errorEmail = false;
   bool errorPassword = false;
@@ -111,7 +110,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       });
       Navigator.of(context).popAndPushNamed('/home');
     } else {
-       setState(() {
+      setState(() {
         loading = false;
       });
       Navigator.of(context).popAndPushNamed('/home');
@@ -147,7 +146,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     bool isOnline = await hasNetwork();
     if (isOnline) {
       try {
-        final response = await http.post(Uri.parse(baseUrl + "/api/v1/guest/login"),
+        final response = await http.post(
+            Uri.parse(baseUrl + "/api/v1/guest/login"),
             headers: <String, String>{
               'Content-Type': 'application/x-www-form-urlencoded'
             },
@@ -173,15 +173,15 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           //     await createToken(loginResponse.data?.accessToken,
           //         loginResponse.data?.employeeId);
           //   }
-            // if (pushResponse.data?.first.token != token) {
-            //   await updateToken(loginResponse.data?.accessToken,
-            //       loginResponse.data?.employeeId, pushResponse.data?.first.id);
-            // }
+          // if (pushResponse.data?.first.token != token) {
+          //   await updateToken(loginResponse.data?.accessToken,
+          //       loginResponse.data?.employeeId, pushResponse.data?.first.id);
+          // }
           //}
-           setState(() {
-                                    loading = false;
-                                  });
-                                  Navigator.of(context).popAndPushNamed('/home');
+          setState(() {
+            loading = false;
+          });
+          Navigator.of(context).popAndPushNamed('/home');
         } else {
           //checkError(response.statusCode);
           setState(() {
@@ -315,6 +315,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         autofocus: false,
                         style: TextStyle(color: Colors.white),
                         textCapitalization: TextCapitalization.none,
+                        keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           focusedBorder: const UnderlineInputBorder(
                             borderSide: const BorderSide(
@@ -444,7 +445,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xff569CDD),
+                            backgroundColor: baseBackgroundColor,
                             side: BorderSide(width: 1.0, color: Colors.white)),
                         onPressed: () {
                           Navigator.of(context).pushNamed('/registration');

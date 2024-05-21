@@ -37,7 +37,7 @@ class Registration extends StatelessWidget {
               title: const Text('Registrati'),
             ),
             body: MyStatefulWidget(),
-            backgroundColor: Color(0xff569CDD)));
+            backgroundColor: baseBackgroundColor));
   }
 }
 

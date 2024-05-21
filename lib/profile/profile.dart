@@ -26,7 +26,7 @@ class Profile extends StatelessWidget {
           title: const Text('Profilo'),
         ),
         body: MyStatefulWidget(),
-        backgroundColor: Color(0xff569CDD));
+        backgroundColor: baseBackgroundColor);
   }
 }
 
@@ -96,7 +96,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
   Widget build(BuildContext context) {
     if (profileResponse == null) {
       return Scaffold(
-        backgroundColor: Color(0xff569CDD),
+        backgroundColor: baseBackgroundColor,
         body: Center(
           child: CircularProgressIndicator(color: Colors.white),
         ),
@@ -104,7 +104,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
     }
 
     return Scaffold(
-      backgroundColor: Color(0xff569CDD),
+      backgroundColor: baseBackgroundColor,
       body: SafeArea(
         child: Column(
           children: <Widget>[
