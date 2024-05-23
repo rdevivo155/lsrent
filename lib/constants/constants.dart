@@ -1,3 +1,2 @@
-//const String baseUrl = "https://api-lsrent.ligeia.eu";
-//const String baseUrl = "https://api.lsrent.tk";
-const String baseUrl = "https://lsgest.lsrent.eu";
+const String baseUrl = "https://demo-lsrent.txlab.it";
+//const String baseUrl = "https://lsgest.lsrent.eu";

@@ -23,6 +23,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 
+
 late FirebaseMessaging messaging;
 var initializationSettingsIOS = DarwinInitializationSettings(
     requestSoundPermission: true,
@@ -72,6 +73,7 @@ void main() async {
 
   // Get result of the login function.
   bool _result = false;
+  // ignore: dead_code
   if (_result) {
     //_defaultHome = new Home();
   }
@@ -81,7 +83,7 @@ void main() async {
     '/accident': (BuildContext context) => new AccidentPage(),
     '/broken-down': (BuildContext context) => new BrokenDown(),
     // '/day-off': (BuildContext context) => new DayOff(),
-    '/login': (BuildContext context) => new Login(),
+    '/login': (BuildContext context) => new LoginView(),
     '/profile': (BuildContext context) => new Profile(),
     '/list': (BuildContext context) => new ListShits(),
     '/registration': (BuildContext context) => new Registration(),
@@ -97,8 +99,9 @@ void main() async {
       // Run app!
       runApp(new MaterialApp(
         title: 'App',  
-        home: isLogged ? new Home() : new Login(),
+        home: isLogged ? new Home() : new LoginView(),
         debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey,
         routes: routes,
         theme: ThemeData(
                   useMaterial3: true,

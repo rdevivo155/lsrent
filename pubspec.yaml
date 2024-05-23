@@ -47,6 +47,7 @@ dependencies:
   app_tracking_transparency: ^2.0.4
   fluttertoast: ^8.0.8
   connectivity: ^3.0.6
+  provider: ^6.1.2
  # firebase_messaging: ^14.1.2
   #firebase_core: ^2.3.0
 

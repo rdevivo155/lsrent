@@ -45,15 +45,8 @@ class _AccidentPageState extends State<AccidentPage> {
       String title,
       String description,
       File? image) async {
-    // bool isOnline = await hasNetwork();
-    bool isOnline = true;
-    // StatusOfVehicleRequest request = StatusOfVehicleRequest(
-    //     pictureId: "string",
-    //     title: title,
-    //     description: description,
-    //     vehicleId: 0,
-    //     officeLocationId: 0,
-    //     employeeId: 0);
+      bool isOnline = true;
+ 
     if (isOnline) {
       final authToken = await getBasicAuth();
       final vehicleId = await getVehicle();
@@ -156,10 +149,7 @@ class _AccidentPageState extends State<AccidentPage> {
               );
             });
       }
-    } else {
-      // checkError(0);
-      return null;
-    }
+    } 
   }
 
   Future pickPhoto() async {
