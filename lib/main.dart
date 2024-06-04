@@ -8,8 +8,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ls_rent/accident/accident.dart';
 import 'package:ls_rent/authentication/login.dart';
 import 'package:ls_rent/firebase_options.dart';
-import 'package:ls_rent/home/home.dart';
 import 'package:flutter/material.dart';
+import 'package:ls_rent/home/home_2.dart';
 import 'package:ls_rent/profile/profile.dart';
 import 'package:ls_rent/list/list.dart';
 import 'package:ls_rent/registration/registration.dart';
@@ -22,7 +22,6 @@ import 'constants/globals.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
-
 
 late FirebaseMessaging messaging;
 var initializationSettingsIOS = DarwinInitializationSettings(
@@ -98,16 +97,16 @@ void main() async {
 
       // Run app!
       runApp(new MaterialApp(
-        title: 'App',  
+        title: 'App',
         home: isLogged ? new Home() : new LoginView(),
         debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey,
         routes: routes,
         theme: ThemeData(
-                  useMaterial3: true,
-                  colorScheme: ColorScheme.fromSeed(
-                    seedColor: Colors.blue,
-                  )),
+          useMaterial3: true,
+          primaryColor: Colors.blue,
+          hintColor: Color(0xFFF5F5F5),
+        ),
         onGenerateRoute: (settings) {
           return CupertinoPageRoute(
               builder: (context) => routes[settings.name]!(context));

@@ -204,7 +204,7 @@ class VersionText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Text('v1.0.1', style: TextStyle(color: Colors.white, fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w200)),
+      child: Text('v1.0.4', style: TextStyle(color: Colors.white, fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w200)),
     );
   }
 }

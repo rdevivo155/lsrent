@@ -6,7 +6,7 @@ class ShiftOfTheDayResponse {
   ShiftOfTheDayResponse({this.statusCode, this.message, this.data});
 
   ShiftOfTheDayResponse.fromJson(Map<String, dynamic> json) {
-    statusCode = json['statusCode'];
+    statusCode = json['statusCode'] != null ? json['statusCode'] : json['status'];
     message = json['message'];
     data = json['data'] != null
         ? new ShiftOfTheDayData.fromJson(json['data'])

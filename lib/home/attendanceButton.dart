@@ -1,37 +1,32 @@
 import 'package:flutter/material.dart';
 
-// Widget per il bottone di timbratura
 class AttendanceButtonWidget extends StatelessWidget {
-  final bool isEndedAttendance;
-  final Function editShift;
 
-  AttendanceButtonWidget({required this.isEndedAttendance, required this.editShift});
+  final bool isStartedAttendance;
+  final bool isEndedAttendance;
+  final bool loading;
+  final VoidCallback onTap;
+
+  AttendanceButtonWidget(
+      {required this.isStartedAttendance,
+      required this.isEndedAttendance,
+      required this.loading,
+      required this.onTap});
+
+  Color createColor() {
+    if (!isStartedAttendance && !isEndedAttendance) {
+      return Color(0xff44b930);
+    } else if (isStartedAttendance && !isEndedAttendance) {
+      return Colors.red;
+    } else {
+      return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => {
-        if (!isEndedAttendance)
-          {
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text("Attenzione"),
-                    content: Text("Sicuro di voler timbrare?"),
-                    actions: [
-                      ElevatedButton(
-                        child: Text("Ok"),
-                        onPressed: () {
-                          editShift();
-                          Navigator.of(context).pop();
-                        },
-                      )
-                    ],
-                  );
-                })
-          }
-      },
+      onTap: onTap,
       child: Container(
         width: MediaQuery.of(context).size.width * 0.5,
         child: Column(children: <Widget>[
@@ -52,17 +47,17 @@ class AttendanceButtonWidget extends StatelessWidget {
                         offset: Offset(0, 4),
                       ),
                     ],
-                    color: !isEndedAttendance ? Colors.green : Colors.red,
+                    color: createColor(),
                   ),
                 ),
                 Positioned.fill(
                   child: Align(
                     alignment: Alignment.center,
                     child: SizedBox(
-                      width: 80,
-                      height: 18,
+                      width: 82,
+                      height: 20,
                       child: Text(
-                        !isEndedAttendance ? "INIZIO" : "FINE",
+                        !isStartedAttendance ? "INIZIO" : "FINE",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -76,7 +71,7 @@ class AttendanceButtonWidget extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ]),
       ),
     );

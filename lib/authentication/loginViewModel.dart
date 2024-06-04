@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:ls_rent/constants/api.dart';
 import 'dart:convert';
 import 'package:ls_rent/model/response/login_response.dart';
 import 'package:ls_rent/services/shared.dart';
@@ -15,8 +16,20 @@ class LoginViewModel with ChangeNotifier {
 
   bool get obscureText => _obscureText;
 
+  LoginViewModel() {
+    precompile();
+  }
+
   void toggleObscureText() {
     _obscureText = !_obscureText;
+    notifyListeners();
+  }
+
+  void precompile() async {
+    var username = await getUsername();
+    var password = await getPassword();
+    nameController = TextEditingController(text: username);
+    passwordController = TextEditingController(text: password);
     notifyListeners();
   }
 
@@ -48,7 +61,7 @@ class LoginViewModel with ChangeNotifier {
 
   try {
     final response = await http.post(
-      Uri.parse(baseUrl + "/api/v1/guest/login"),
+      Uri.parse(API.login),
       headers: <String, String>{
         'Content-Type': 'application/x-www-form-urlencoded'
       },
@@ -56,12 +69,14 @@ class LoginViewModel with ChangeNotifier {
         'username': nameController.text.trim(),
         'password': passwordController.text.trim()
       }
-    ).timeout(const Duration(seconds: 15));
+    ).timeout(const Duration(seconds: 20));
 
     if (response.statusCode == 200) {
+      setUsername(nameController.text.trim());
+      setPassword(passwordController.text.trim());
       LoginResponse loginResponse = LoginResponse.fromJson(jsonDecode(response.body));
       setBasicAuth(loginResponse.data?.accessToken ?? "");
-      setEmployee(loginResponse.data?.employeeId.toString() ?? "");
+      setEmployee(loginResponse.data?.employeeId ?? 0);
       setIsLogged(true);
 
       loading = false;

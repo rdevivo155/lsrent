@@ -65,7 +65,7 @@ class _AccidentPageState extends State<AccidentPage> {
             "vehicle_id": vehicleId,
             "office_location_id": officeLocationId,
             "employee_id": employeeId
-          }).timeout(const Duration(seconds: 15));
+          }).timeout(const Duration(seconds: 20));
 
       print(response.body);
 

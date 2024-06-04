@@ -67,12 +67,12 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
     print(authToken);
     try {
       var response = await http.get(
-        Uri.parse(baseUrl + "/api/v1/employees/view/" + id),
+        Uri.parse(baseUrl + "/api/v1/employees/view/" + id.toString()),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': "Bearer " + (authToken ?? "")
         },
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 20));
 
       log(response.body);
       print(response.statusCode);
@@ -104,15 +104,15 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
     }
 
     return Scaffold(
-      backgroundColor: Color(0xff569CDD),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: <Widget>[
             Text(
               profileResponse!.data!.lastName!,
               style: TextStyle(
-                fontSize: 30.0,
-                color: Colors.white,
+                fontSize: 22.0,
+                color: Color(0xff569CDD),
                 fontWeight: FontWeight.bold,
                 fontFamily: "Pacifico",
               ),
@@ -120,8 +120,8 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
             Text(
               profileResponse!.data!.firstName!,
               style: TextStyle(
-                fontSize: 30,
-                color: Colors.white,
+                fontSize: 22,
+                color: Color(0xff569CDD),
                 letterSpacing: 2.5,
                 fontWeight: FontWeight.bold,
                 fontFamily: "Source Sans Pro",
