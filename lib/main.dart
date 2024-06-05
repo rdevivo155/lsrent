@@ -8,8 +8,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ls_rent/accident/accident.dart';
 import 'package:ls_rent/authentication/login.dart';
 import 'package:ls_rent/firebase_options.dart';
-import 'package:ls_rent/home/home.dart';
 import 'package:flutter/material.dart';
+import 'package:ls_rent/home/home_2.dart';
 import 'package:ls_rent/profile/profile.dart';
 import 'package:ls_rent/list/list.dart';
 import 'package:ls_rent/registration/registration.dart';
@@ -72,6 +72,7 @@ void main() async {
 
   // Get result of the login function.
   bool _result = false;
+  // ignore: dead_code
   if (_result) {
     //_defaultHome = new Home();
   }
@@ -81,7 +82,7 @@ void main() async {
     '/accident': (BuildContext context) => new AccidentPage(),
     '/broken-down': (BuildContext context) => new BrokenDown(),
     // '/day-off': (BuildContext context) => new DayOff(),
-    '/login': (BuildContext context) => new Login(),
+    '/login': (BuildContext context) => new LoginView(),
     '/profile': (BuildContext context) => new Profile(),
     '/list': (BuildContext context) => new ListShits(),
     '/registration': (BuildContext context) => new Registration(),
@@ -96,15 +97,16 @@ void main() async {
 
       // Run app!
       runApp(new MaterialApp(
-        title: 'App',  
-        home: isLogged ? new Home() : new Login(),
+        title: 'App',
+        home: isLogged ? new Home() : new LoginView(),
         debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey,
         routes: routes,
         theme: ThemeData(
-                  useMaterial3: true,
-                  colorScheme: ColorScheme.fromSeed(
-                    seedColor: Colors.blue,
-                  )),
+          useMaterial3: true,
+          primaryColor: Colors.blue,
+          hintColor: Color(0xFFF5F5F5),
+        ),
         onGenerateRoute: (settings) {
           return CupertinoPageRoute(
               builder: (context) => routes[settings.name]!(context));

@@ -50,7 +50,7 @@ class _MyStatefulWidget extends State<MyStatefulWidget> {
           Uri.parse(baseUrl + "/api/v1/shifts?year=${selectedDate?.year}&month=${selectedDate?.month}"),
           headers: <String, String>{
             'Authorization': "Bearer " + authToken!
-          }).timeout(const Duration(seconds: 15));
+          }).timeout(const Duration(seconds: 20));
       if (response.statusCode == 200) {
         shiftsResponse = ShiftsResponse.fromJson(jsonDecode(response.body));
         shiftsResponse!.data!.dataModels!

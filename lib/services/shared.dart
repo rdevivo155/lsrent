@@ -15,6 +15,36 @@ removeBasicAuth() async {
   prefs.remove('basicAuth');
 }
 
+setUsername(String username) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.setString('username', username);
+}
+
+Future<String?> getUsername() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('username');
+}
+
+removeUsername() async {
+  final prefs = await SharedPreferences.getInstance();
+  prefs.remove('username');
+}
+
+setPassword(String password) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.setString('password', password);
+}
+
+Future<String?> getPassword() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('password');
+}
+
+removePassword() async {
+  final prefs = await SharedPreferences.getInstance();
+  prefs.remove('password');
+}
+
 setIsLogged(bool logged) async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.setBool('isLogged', logged);
@@ -45,12 +75,12 @@ Future<String> getLocation() async {
   return prefs.getString('location') ?? "";
 }
 
-setEmployee(String employee) async {
+setEmployee(int employee) async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.setString('employee', employee);
+  return prefs.setInt('employee', employee);
 }
 
-Future<String> getEmployee() async {
+Future<int> getEmployee() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('employee') ?? "";
+  return prefs.getInt('employee') ?? 0;
 }

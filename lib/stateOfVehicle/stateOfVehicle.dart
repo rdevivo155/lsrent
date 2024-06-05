@@ -65,7 +65,7 @@ class _MyHomePageState extends State<StateOfVehicle> {
             "vehicle_id": vehicleId,
             "office_location_id": officeLocationId,
             "employee_id": employeeId
-          }).timeout(const Duration(seconds: 15));
+          }).timeout(const Duration(seconds: 20));
 
       print(response.body);
 
@@ -87,7 +87,7 @@ class _MyHomePageState extends State<StateOfVehicle> {
         request.headers.addAll(headers);
 
         http.StreamedResponse responseImage =
-            await request.send().timeout(const Duration(seconds: 15));
+            await request.send().timeout(const Duration(seconds: 20));
 
         if (responseImage.statusCode == 202) {
           print(await responseImage.stream.bytesToString());
